@@ -39,8 +39,10 @@ test('scan groups by first Seller SKU folder and remembers no-tag decisions by c
 
   const progress = [];
   const result = await scanMediaLibrary(directory, exiftool, store, (update) => progress.push(update.percent));
-  assert.equal(result.items.length, 3);
+  assert.equal(result.items.length, 4);
   assert.equal(result.videos.length, 1);
+  assert.equal(result.items.find((item) => item.path === video).mediaType, 'video');
+  assert.equal(result.items.find((item) => item.path === video).status, 'review');
   assert.equal(result.unassigned.length, 1);
   assert.equal(result.items.filter((item) => item.status === 'cleared').length, 2);
   assert.equal(result.items.find((item) => item.path === first).exactDuplicateCount, 2);

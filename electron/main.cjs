@@ -142,7 +142,7 @@ function setupIpc() {
     lastScan = await scanMediaLibrary(root, exiftool, store, progressReporter('scan'));
     await store.audit('folder-scanned', {
       root,
-      imageCount: lastScan.items.length,
+      imageCount: lastScan.items.filter((item) => item.mediaType === 'image').length,
       videoCount: lastScan.videos.length,
       unsupportedCount: lastScan.unsupported.length,
     });

@@ -48,6 +48,10 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   assert.match(renderer, /api\.chooseFolder\(state\.locale\)/);
   assert.match(renderer, /api\.openSoftwareDisclaimer\(\)/);
   assert.match(renderer, /api\.openCreatorProfile\(\)/);
+  assert.match(renderer, /data-media-type="\$\{isVideo \? 'video' : 'image'\}"/);
+  assert.match(renderer, /video-review-warning/);
+  assert.match(renderer, /card\.dataset\.mediaType === 'video'/);
+  assert.doesNotMatch(renderer, /state\.scan\.videos\.map/);
   assert.ok(fs.statSync(path.join(projectRoot, 'src', 'assets', 'logo.png')).size > 10_000);
   assert.ok(fs.statSync(path.join(projectRoot, 'build', 'icon.png')).size > 100_000);
 

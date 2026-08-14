@@ -120,6 +120,7 @@ code { background: #eeeee8; border-radius: 4px; padding: 2px 5px; font-family: C
 .thumbnail-wrap { height: 175px; display: grid; place-items: center; background: #e9e8e2; position: relative; overflow: hidden; }
 .thumbnail-wrap img { width: 100%; height: 100%; object-fit: contain; }
 .thumbnail-placeholder { color: #939b96; font-size: 11px; }
+.video-placeholder { color: var(--danger); font-size: 34px; font-weight: 800; }
 .card-select { position: absolute; z-index: 2; left: 10px; top: 10px; width: 21px; height: 21px; accent-color: var(--green); }
 .badge-row { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 5px; }
 .badge { padding: 4px 7px; border-radius: 99px; background: rgba(32,38,34,.82); color: white; font-size: 9px; font-weight: 750; backdrop-filter: blur(3px); }
@@ -128,6 +129,7 @@ code { background: #eeeee8; border-radius: 4px; padding: 2px 5px; font-family: C
 .card-body { padding: 11px 12px 12px; }
 .card-title { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 700; }
 .card-meta { margin-top: 5px; display: flex; justify-content: space-between; gap: 5px; color: #7b837e; font-size: 10px; }
+.video-review-warning { margin: 9px 0 0; padding: 6px 7px; border: 1px solid #e4b5b0; border-radius: 6px; background: #fff1ef; color: var(--danger); font-size: 10px; line-height: 1.35; font-weight: 800; letter-spacing: .04em; }
 .card-path { margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #929894; font-size: 9px; }
 .card-footer { border-top: 1px solid #ecebe5; display: flex; }
 .card-footer button { flex: 1; border: 0; background: transparent; color: #617069; padding: 8px; font-size: 10px; }
@@ -195,6 +197,7 @@ html[data-theme="dark"] .search-field input { background: var(--surface); color:
 html[data-theme="dark"] .selection-bar { background: #1a2b23; border-color: #365f4d; }
 html[data-theme="dark"] .summary-pill { background: rgba(255,255,255,.035); }
 html[data-theme="dark"] .thumbnail-wrap { background: #111613; }
+html[data-theme="dark"] .video-review-warning { border-color: #70413c; background: #351f1d; }
 html[data-theme="dark"] .card-footer { border-top-color: var(--line); }
 html[data-theme="dark"] .card-footer button:hover { background: rgba(255,255,255,.05); }
 html[data-theme="dark"] code { background: #28302b; }

@@ -199,7 +199,7 @@ function counts() {
     tagged: items.filter((item) => item.status === 'tagged').length,
     cleared: items.filter((item) => item.status === 'cleared').length,
     duplicates: items.filter((item) => item.exactDuplicateCount > 1 || item.visualVariantGroup).length,
-    issues: (state.scan?.videos.length || 0) + (state.scan?.unsupported.length || 0) + (state.scan?.unassigned.length || 0),
+    issues: (state.scan?.unsupported.length || 0) + (state.scan?.unassigned.length || 0),
   };
 }
 
@@ -254,7 +254,7 @@ function renderSidebar() {
     const relevant = state.view === 'duplicates'
       ? state.scan.items.filter((item) => item.sku === summary.sku && (item.exactDuplicateCount > 1 || item.visualVariantGroup)).length
       : state.view === 'issues'
-        ? [...state.scan.videos, ...state.scan.unsupported, ...state.scan.unassigned].filter((item) => item.sku === summary.sku).length
+        ? [...state.scan.unsupported, ...state.scan.unassigned].filter((item) => item.sku === summary.sku).length
         : summary[state.view] || 0;
     return `<button class="sku-button ${state.sku === summary.sku ? 'active' : ''}" data-sku="${escapeText(summary.sku)}"><span>${escapeText(summary.sku)}</span><span>${relevant}</span></button>`;
   }).join('');
@@ -286,6 +286,7 @@ function exactKeepPath(item) {
 }
 
 function mediaCard(item) {
+  const isVideo = item.mediaType === 'video';
   const badges = [];
   if (item.tagCount > 1) badges.push(`<span class="badge badge-warning">${t('badge.tagCount', { count: item.tagCount })}</span>`);
   else if (item.hasTag) badges.push(`<span class="badge badge-ok">${t('badge.verified')}</span>`);
@@ -293,16 +294,17 @@ function mediaCard(item) {
     badges.push(`<span class="badge">${exactKeepPath(item) === item.path ? t('badge.suggestedKeep') : t('badge.exactCopy', { count: item.exactDuplicateCount })}</span>`);
   } else if (item.visualVariantGroup) badges.push(`<span class="badge">${t('badge.visualVariant')}</span>`);
   return `
-    <article class="media-card ${state.selected.has(item.path) ? 'selected' : ''}" data-path="${escapeText(item.path)}">
+    <article class="media-card ${state.selected.has(item.path) ? 'selected' : ''}" data-path="${escapeText(item.path)}" data-media-type="${isVideo ? 'video' : 'image'}">
       <div class="thumbnail-wrap">
         ${(state.view !== 'cleared') ? `<input class="card-select" type="checkbox" aria-label="${escapeText(t('card.select', { name: item.name }))}" ${state.selected.has(item.path) ? 'checked' : ''}>` : ''}
-        <span class="thumbnail-placeholder">${t('card.loadingPreview')}</span>
-        <img class="hidden" alt="${escapeText(item.name)}">
+        <span class="thumbnail-placeholder ${isVideo ? 'video-placeholder' : ''}">${isVideo ? '▶' : t('card.loadingPreview')}</span>
+        ${isVideo ? '' : `<img class="hidden" alt="${escapeText(item.name)}">`}
         <div class="badge-row">${badges.join('')}</div>
       </div>
       <div class="card-body">
         <p class="card-title" title="${escapeText(item.name)}">${escapeText(item.name)}</p>
-        <div class="card-meta"><span>${escapeText(item.sku)}</span><span>${item.width || '?'} × ${item.height || '?'}</span><span>${formatBytes(item.size)}</span></div>
+        <div class="card-meta"><span>${escapeText(item.sku)}</span><span>${isVideo ? t('card.videoFile') : `${item.width || '?'} × ${item.height || '?'}`}</span><span>${formatBytes(item.size)}</span></div>
+        ${isVideo ? `<p class="video-review-warning" role="note">${escapeText(t('card.videoWarning'))}</p>` : ''}
         <div class="card-path" title="${escapeText(item.relativePath)}">${escapeText(item.relativePath)}</div>
       </div>
       <div class="card-footer"><button data-show-folder>${t('card.showInFolder')}</button></div>
@@ -312,6 +314,7 @@ function mediaCard(item) {
 async function hydrateThumbnails(cards) {
   for (const card of cards) {
     const filePath = card.dataset.path;
+    if (card.dataset.mediaType === 'video') continue;
     try {
       const source = await api.getThumbnail(state.root, filePath);
       if (!card.isConnected || card.dataset.path !== filePath) continue;
@@ -328,7 +331,6 @@ async function hydrateThumbnails(cards) {
 
 function renderIssues() {
   const all = [
-    ...state.scan.videos.map((item) => ({ ...item, kind: t('issue.videoManual') })),
     ...state.scan.unsupported.map((item) => ({ ...item, kind: t('issue.unsupported', { extension: item.extension }) })),
     ...state.scan.unassigned.map((item) => ({ ...item, kind: t('issue.notInsideSku') })),
   ].filter((item) => (!state.sku || item.sku === state.sku) && (!state.query || `${item.sku || ''} ${item.name} ${item.path}`.toLocaleLowerCase().includes(state.query.toLocaleLowerCase())));

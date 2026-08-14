@@ -23,20 +23,20 @@ Your media files, local review decisions, safety backups, and app settings are i
 - New users receive a five-step quick-start tutorial.
 - Language, theme, and tutorial choices are stored only in the local app profile.
 
-A private, human-first Windows and macOS desktop app for preparing local Amazon listing images that contain photorealistic AI-generated people. It adds the exact keyword `contains-synthetic-performer` to XMP `dc:subject`, then re-reads that explicit field before reporting the local file as verified.
+A private, human-first Windows and macOS desktop app for preparing local Amazon listing images and supported videos that contain photorealistic AI-generated people. It adds the exact keyword `contains-synthetic-performer` to XMP `dc:subject`, then re-reads that explicit field before reporting the local file as verified.
 
 ## Safe workflow
 
 1. Organize media under `Media Library\Seller-SKU\...`.
 2. Open the app, choose that Media Library folder, and press **Scan**. No background monitoring occurs.
-3. Review the untagged images for one Seller SKU. Click anywhere on an image card to select or deselect it, then choose **Add tag & verify** or **No tag needed**. **Show in folder** never changes the selection.
+3. Review the untagged images and videos for one Seller SKU. Click anywhere on a media card to select or deselect it, then choose **Add tag & verify** or **No tag needed**. Videos carry a red **WATCH FULL VIDEO BEFORE REVIEW** warning; watch the entire video before making a decision. **Show in folder** never changes the selection.
 4. Upload the prepared files to Seller Central manually. The app does not log in to Amazon or claim an upload succeeded.
 
 Use **Select visible** for the current Seller SKU/search result, or **Select all media** to select the complete current queue across every Seller SKU. In **Duplicates & visual variants**, select a false visual match and choose **Not a duplicate** to remember that decision by content fingerprint; byte-for-byte exact duplicates cannot be dismissed.
 
 Long operations show measured progress from 0% to 100%, with the current stage and file count. Unicode filenames (including Chinese characters) and UNC network-share paths are passed to ExifTool through a UTF-8-safe argument channel.
 
-Videos appear under **Other files** and remain a full-human-watch/manual-tag workflow.
+MP4 and MOV videos enter the normal review queue and can be tagged, verified, or marked **No tag needed**. The app does not analyze their content; the red warning requires a human to watch the full video first. AVI, MKV, and other unsupported formats remain under **Other files**.
 
 ## What “verified locally” means
 
@@ -51,11 +51,15 @@ The app creates a private local safety backup before the first mutation, appends
 - Tag removal is a separately confirmed correction.
 - File deletion uses the Windows Recycle Bin or macOS Trash only.
 - Safety backups are eligible for manual cleanup after 30 days and are never deleted automatically.
-- Videos, unsupported files, files without a Seller SKU folder, and metadata warnings are surfaced instead of silently skipped.
+- Unsupported files, files without a Seller SKU folder, and metadata warnings are surfaced instead of silently skipped. Supported videos remain visible in the review queue until a human decision is recorded.
 
 ## Supported still-image formats
 
 JPEG/JPG, PNG, TIFF/TIF, and WebP.
+
+## Supported video formats
+
+MP4 and MOV. Video content is never classified automatically: watch the full file, then use the same **Add tag & verify** or **No tag needed** action as images.
 
 ## Development
 

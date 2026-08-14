@@ -107,8 +107,8 @@ async function enumerateMedia(rootPath) {
         unassigned.push({ path: fullPath, name: entry.name, reason: 'File is not inside a Seller SKU folder.' });
         continue;
       }
-      if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) files.push({ path: fullPath, relativePath, name: entry.name, sku, extension });
-      else if (MANUAL_VIDEO_EXTENSIONS.has(extension)) videos.push({ path: fullPath, relativePath, name: entry.name, sku, extension });
+      if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) files.push({ path: fullPath, relativePath, name: entry.name, sku, extension, mediaType: 'image' });
+      else if (MANUAL_VIDEO_EXTENSIONS.has(extension)) videos.push({ path: fullPath, relativePath, name: entry.name, sku, extension, mediaType: 'video' });
       else unsupported.push({ path: fullPath, relativePath, name: entry.name, sku, extension: extension || '(none)' });
     }
   }
@@ -119,9 +119,10 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   const report = typeof onProgress === 'function' ? onProgress : () => {};
   report({ percent: 0, key: 'progress.findingMedia' });
   const inventory = await enumerateMedia(rootPath);
-  report({ percent: 10, key: 'progress.readingMetadata', variables: { total: inventory.files.length } });
+  const reviewable = [...inventory.files, ...inventory.videos];
+  report({ percent: 10, key: 'progress.readingMetadata', variables: { total: reviewable.length } });
   const metadata = await exiftool.readMetadataBatch(
-    inventory.files.map((file) => file.path),
+    reviewable.map((file) => file.path),
     ({ completed, total }) => report({
       percent: total ? 10 + Math.round((completed / total) * 20) : 30,
       key: 'progress.readMetadata',
@@ -130,9 +131,12 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   );
   const metadataByPath = new Map(metadata.map((record) => [normalizePath(record.sourceFile), record]));
   let inspectedCount = 0;
-  const inspected = await mapLimit(inventory.files, HASH_CONCURRENCY, async (file) => {
+  const inspected = await mapLimit(reviewable, HASH_CONCURRENCY, async (file) => {
     const stats = await fsp.stat(file.path);
-    const [contentHash, visualHash] = await Promise.all([sha256File(file.path), perceptualHash(file.path)]);
+    const [contentHash, visualHash] = await Promise.all([
+      sha256File(file.path),
+      file.mediaType === 'image' ? perceptualHash(file.path) : Promise.resolve(null),
+    ]);
     const meta = metadataByPath.get(normalizePath(file.path)) || { subjects: [], hasTag: false, tagCount: 0 };
     const decision = store.getDecision(contentHash);
     const item = {
@@ -151,9 +155,9 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
     };
     inspectedCount += 1;
     report({
-      percent: inventory.files.length ? 30 + Math.round((inspectedCount / inventory.files.length) * 60) : 90,
+      percent: reviewable.length ? 30 + Math.round((inspectedCount / reviewable.length) * 60) : 90,
       key: 'progress.fingerprinting',
-      variables: { completed: inspectedCount, total: inventory.files.length },
+      variables: { completed: inspectedCount, total: reviewable.length },
     });
     return item;
   });
@@ -210,7 +214,7 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
     scannedAt: new Date().toISOString(),
     items: inspected,
     skuSummaries: Object.values(summaries).sort((first, second) => first.sku.localeCompare(second.sku)),
-    videos: inventory.videos,
+    videos: inspected.filter((item) => item.mediaType === 'video'),
     unsupported: inventory.unsupported,
     unassigned: inventory.unassigned,
   };

@@ -1,7 +1,7 @@
 {
   "name": "amazon-adding-metadata-tag",
-  "version": "1.4.0",
-  "description": "Private local Windows and macOS reviewer for Amazon synthetic-performer XMP tagging",
+  "version": "1.5.0",
+  "description": "Private local Windows and macOS reviewer for Amazon synthetic-performer XMP tagging of images and videos",
   "main": "electron/main.cjs",
   "author": "khooyc (https://github.com/khooyc)",
   "license": "UNLICENSED",

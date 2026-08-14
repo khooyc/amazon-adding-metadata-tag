@@ -36,8 +36,8 @@ _Avoid_: Master file, original
 All master images and videos associated with one Seller SKU, regardless of marketplace, media role, or version.
 _Avoid_: ASIN folder, product images
 
-**Image Review Batch**:
-A human-review group containing still images for one Seller SKU; reviewers may approve selected files together and deselect unrelated files before deciding. Videos are reviewed fully and tagged manually outside this batch.
+**Media Review Batch**:
+A human-review group containing still images and supported videos for one Seller SKU; reviewers may approve selected files together and deselect unrelated files before deciding. Videos carry a visible warning and must be watched in full before the human decision.
 _Avoid_: Automatic batch approval, folder approval
 
 **Exact Duplicate**:
