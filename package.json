@@ -1,0 +1,65 @@
+{
+  "name": "amazon-adding-metadata-tag",
+  "version": "1.3.4",
+  "description": "Private local Windows reviewer for Amazon synthetic-performer XMP tagging",
+  "main": "electron/main.cjs",
+  "author": "khooyc (https://github.com/khooyc)",
+  "license": "UNLICENSED",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khooyc/amazon-adding-metadata-tag.git"
+  },
+  "homepage": "https://github.com/khooyc/amazon-adding-metadata-tag",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "dist": "npm run test && electron-builder --win nsis",
+    "pack": "electron-builder --dir --win"
+  },
+  "dependencies": {
+    "exiftool-vendored.exe": "13.59.2",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "electron": "43.4.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "local.khoom.listingmediatagreviewer",
+    "productName": "Amazon - Adding Metadata Tag",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "build/icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "node_modules/exiftool-vendored.exe/bin",
+        "to": "exiftool",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Amazon-Adding-Metadata-Tag-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Amazon - Adding Metadata Tag",
+      "uninstallDisplayName": "Amazon - Adding Metadata Tag"
+    }
+  }
+}

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Amazon - Adding Metadata Tag</title>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-mark" src="assets/logo.png" alt="">
+          <div>
+            <h1 data-i18n="app.name">Amazon - Adding Metadata Tag</h1>
+            <p data-i18n="app.tagline">Private, local XMP verification</p>
+          </div>
+        </div>
+        <div class="folder-controls">
+          <button id="choose-folder" class="button button-secondary" data-i18n="button.chooseFolder">Choose media folder</button>
+          <button id="scan-folder" class="button button-primary" data-i18n="button.scan" disabled>Scan</button>
+        </div>
+      </header>
+
+      <div id="folder-strip" class="folder-strip">
+        <span class="status-dot"></span>
+        <span id="folder-path" data-i18n="folder.none">No folder selected. Nothing is scanned automatically.</span>
+      </div>
+
+      <main class="workspace">
+        <aside class="sidebar">
+          <nav class="view-nav" aria-label="Review views">
+            <button class="nav-item active" data-view="review"><span data-i18n="nav.review">Needs review</span><strong id="count-review">0</strong></button>
+            <button class="nav-item" data-view="tagged"><span data-i18n="nav.tagged">Already tagged</span><strong id="count-tagged">0</strong></button>
+            <button class="nav-item" data-view="cleared"><span data-i18n="nav.cleared">No tag needed</span><strong id="count-cleared">0</strong></button>
+            <button class="nav-item" data-view="duplicates"><span data-i18n="nav.duplicates">Duplicate cleanup</span><strong id="count-duplicates">0</strong></button>
+            <button class="nav-item" data-view="issues"><span data-i18n="nav.issues">Other files</span><strong id="count-issues">0</strong></button>
+          </nav>
+
+          <div class="sidebar-heading">
+            <span data-i18n="sidebar.sellerSku">Seller SKU</span>
+            <button id="all-skus" class="link-button" data-i18n="sidebar.all">All</button>
+          </div>
+          <div id="sku-list" class="sku-list"></div>
+
+          <div class="sidebar-bottom">
+            <div class="settings-panel">
+              <div class="settings-heading" data-i18n="settings.heading">Settings</div>
+              <label class="settings-field">
+                <span data-i18n="settings.language">Language</span>
+                <select id="language-select">
+                  <option value="en">English</option>
+                  <option value="zh-CN">简体中文</option>
+                  <option value="zh-TW">繁體中文</option>
+                </select>
+              </label>
+              <label class="settings-field">
+                <span data-i18n="settings.appearance">Appearance</span>
+                <select id="theme-select">
+                  <option value="system" data-i18n="settings.themeSystem">System</option>
+                  <option value="light" data-i18n="settings.themeLight">Light</option>
+                  <option value="dark" data-i18n="settings.themeDark">Dark</option>
+                </select>
+              </label>
+              <button id="tutorial-open" class="settings-button" data-i18n="settings.tutorial">How to use</button>
+            </div>
+            <section id="human-verification-warning" class="human-verification-warning" aria-labelledby="human-verification-title">
+              <strong id="human-verification-title" data-i18n="warning.title">Human Verification Required</strong>
+              <p data-i18n="warning.body">This tool may make mistakes. Always review your files, check the latest applicable Amazon requirements, and confirm that any required XMP metadata or tag is present in the final file before uploading or submitting it.</p>
+              <button id="software-disclaimer-link" class="legal-link" data-i18n="warning.disclaimer">Software Licence &amp; Disclaimer</button>
+            </section>
+            <button id="creator-link" class="creator-link" data-i18n="creator.by">Created by khooyc (GitHub)</button>
+            <button id="backup-manager" class="backup-link"><span data-i18n="sidebar.backupCleanup">Backup cleanup</span><span data-i18n="sidebar.backupDays">30 days</span></button>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div id="welcome" class="welcome">
+            <div class="welcome-icon">✓</div>
+            <p class="eyebrow" data-i18n="welcome.eyebrow">Human-first review</p>
+            <h2 data-i18n="welcome.title">Verify every local image before Amazon upload</h2>
+            <p data-i18n="welcome.body">Select a folder organized as Media Library\Seller-SKU\images. The app scans only when you press Scan, and every file change requires your approval.</p>
+            <button id="welcome-choose" class="button button-primary" data-i18n="button.chooseFolder">Choose media folder</button>
+            <div class="safety-row">
+              <span data-i18n="welcome.localOnly">Local only</span><span data-i18n="welcome.backups">30-day safety backups</span><span data-i18n="welcome.xmp">Exact XMP re-check</span>
+            </div>
+          </div>
+
+          <div id="library" class="library hidden">
+            <div class="content-header">
+              <div>
+                <p id="view-eyebrow" class="eyebrow">Needs review</p>
+                <h2 id="view-title">Untagged images</h2>
+                <p id="view-description">Every unique image needs a human decision.</p>
+              </div>
+              <div class="header-controls">
+                <label class="search-field"><span data-i18n="search.label">Search</span><input id="search" type="search" placeholder="SKU or filename" data-i18n-placeholder="search.placeholder"></label>
+                <button id="select-visible" class="button button-secondary" data-i18n="button.selectVisible">Select visible</button>
+                <button id="select-all-media" class="button button-primary" data-i18n="button.selectAll">Select all media</button>
+              </div>
+            </div>
+
+            <div id="selection-bar" class="selection-bar hidden">
+              <strong id="selected-label">0 selected</strong>
+              <span id="selection-note" data-i18n="selection.exactIncluded">Exact duplicate copies are included together.</span>
+              <div id="review-actions" class="selection-actions">
+                <button id="mark-no-tag" class="button button-secondary" data-i18n="action.noTag">No tag needed</button>
+                <button id="add-tag" class="button button-primary" data-i18n="action.addTag">Add tag & verify</button>
+              </div>
+              <div id="tagged-actions" class="selection-actions hidden">
+                <button id="normalize-tag" class="button button-secondary" data-i18n="action.keepOneTag">Keep one tag</button>
+                <button id="remove-tag" class="button button-danger-outline" data-i18n="action.removeTag">Remove tag...</button>
+              </div>
+              <div id="duplicate-actions" class="selection-actions hidden">
+                <button id="not-duplicate" class="button button-secondary" data-i18n="action.notDuplicate">Not a duplicate</button>
+                <button id="trash-files" class="button button-danger-outline" data-i18n="action.recycleBin">Move to Recycle Bin...</button>
+              </div>
+            </div>
+
+            <div id="summary-cards" class="summary-cards"></div>
+            <div id="gallery" class="gallery"></div>
+            <div id="empty-view" class="empty-view hidden">
+              <div>✓</div><h3 data-i18n="empty.title">Nothing here</h3><p data-i18n="empty.body">This view has no matching files.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="progress-overlay" class="modal-backdrop hidden" role="status" aria-live="polite">
+      <div class="progress-card">
+        <div id="progress-percent" class="progress-percent">0%</div>
+        <div id="progress-track" class="progress-track" role="progressbar" aria-label="Operation progress" data-i18n-aria-label="progress.aria" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress-fill" class="progress-fill"></div></div>
+        <h3 id="progress-title" data-i18n="progress.scanningTitle">Scanning locally...</h3>
+        <p id="progress-detail" data-i18n="progress.scanningDetail">Reading metadata and comparing image fingerprints.</p>
+      </div>
+    </div>
+
+    <dialog id="tutorial-dialog" class="dialog tutorial-dialog">
+      <form method="dialog">
+        <p class="eyebrow" data-i18n="tutorial.eyebrow">Quick start guide</p>
+        <h2 data-i18n="tutorial.title">How to use the app</h2>
+        <div class="tutorial-progress"><span id="tutorial-step-count">Step 1 of 5</span><div class="tutorial-dots" id="tutorial-dots"></div></div>
+        <div class="tutorial-content">
+          <div id="tutorial-icon" class="tutorial-icon">1</div>
+          <h3 id="tutorial-step-title"></h3>
+          <p id="tutorial-step-body"></p>
+        </div>
+        <div class="tutorial-actions">
+          <button id="tutorial-skip" value="skip" class="button button-secondary" data-i18n="button.skipTutorial">Skip tutorial</button>
+          <div>
+            <button id="tutorial-back" type="button" class="button button-secondary" data-i18n="button.back">Back</button>
+            <button id="tutorial-next" type="button" class="button button-primary" data-i18n="button.next">Next</button>
+          </div>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="confirm-dialog" class="dialog">
+      <form method="dialog">
+        <p id="dialog-eyebrow" class="eyebrow" data-i18n="confirm.eyebrow">Confirm action</p>
+        <h2 id="dialog-title" data-i18n="confirm.title">Are you sure?</h2>
+        <p id="dialog-message"></p>
+        <div id="dialog-files" class="dialog-files"></div>
+        <div class="dialog-actions">
+          <button value="cancel" class="button button-secondary" data-i18n="button.cancel">Cancel</button>
+          <button id="dialog-confirm" value="confirm" class="button button-danger" data-i18n="button.confirm">Confirm</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div id="toast-region" class="toast-region" aria-live="polite"></div>
+    <script src="i18n.js"></script>
+    <script src="renderer.js"></script>
+  </body>
+</html>
