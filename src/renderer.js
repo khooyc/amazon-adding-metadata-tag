@@ -23,6 +23,7 @@ const state = {
   query: '',
   selected: new Set(),
   busy: false,
+  platform: navigator.platform.toLowerCase().includes('mac') ? 'darwin' : 'win32',
   locale: initialLocale(),
   theme: initialTheme(),
   tutorialStep: 0,
@@ -60,8 +61,16 @@ const TUTORIAL_STEPS = [
 
 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
 
+const MAC_TRANSLATION_KEYS = {
+  'action.recycleBin': 'action.trashMac',
+  'toast.movedRecycle': 'toast.movedTrashMac',
+  'confirm.trashTitle': 'confirm.trashTitleMac',
+  'confirm.trashLabel': 'confirm.trashLabelMac',
+};
+
 function t(key, variables = {}) {
-  return translate(state.locale, key, variables);
+  const platformKey = state.platform === 'darwin' ? (MAC_TRANSLATION_KEYS[key] || key) : key;
+  return translate(state.locale, platformKey, variables);
 }
 
 function resolvedTheme() {
@@ -630,6 +639,8 @@ applyStaticTranslations();
   showTutorial();
   try {
     const appState = await api.getState();
+    state.platform = appState.platform || state.platform;
+    applyStaticTranslations();
     if (appState.settings.lastRoot) elements['folder-path'].textContent = t('folder.lastUsed', { path: appState.settings.lastRoot });
   } catch (error) {
     toast(t('toast.startupFailed', { message: error.message }), 'error');

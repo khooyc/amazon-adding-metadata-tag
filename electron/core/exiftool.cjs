@@ -7,10 +7,14 @@ const { TAG_FIELD, TAG_VALUE } = require('./constants.cjs');
 
 const execFileAsync = promisify(execFile);
 
-function getExifToolPath({ appPath, resourcesPath, packaged = false }) {
-  return packaged
-    ? path.join(resourcesPath, 'exiftool', 'exiftool.exe')
-    : path.join(appPath, 'node_modules', 'exiftool-vendored.exe', 'bin', 'exiftool.exe');
+function getExifToolPath({ appPath, resourcesPath, packaged = false, platform = process.platform }) {
+  const vendor = platform === 'win32'
+    ? { packageName: 'exiftool-vendored.exe', executable: 'exiftool.exe' }
+    : { packageName: 'exiftool-vendored.pl', executable: 'exiftool' };
+  const basePath = packaged
+    ? path.join(resourcesPath, 'app.asar.unpacked', 'node_modules')
+    : path.join(appPath, 'node_modules');
+  return path.join(basePath, vendor.packageName, 'bin', vendor.executable);
 }
 
 function normalizeSubjects(value) {
@@ -25,9 +29,8 @@ class ExifToolClient {
   }
 
   async execute(args, options = {}) {
-    // The packaged Windows launcher loses non-ASCII file names when they are
-    // passed directly on its command line. A UTF-8 ExifTool argument file
-    // preserves names such as `(改)listing.jpg`, including on UNC shares.
+    // A UTF-8 ExifTool argument file preserves non-ASCII names such as
+    // `(改)listing.jpg`, including on Windows UNC shares.
     const temporaryDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'lmtr-exiftool-'));
     const argumentFile = path.join(temporaryDirectory, 'arguments.txt');
     try {

@@ -26,7 +26,7 @@ test('ExifTool is bundled and executable', async () => {
   assert.match(await exiftool.version(), /^13\.59/);
 });
 
-test('reads and writes metadata for Unicode Windows filenames', async (context) => {
+test('reads and writes metadata for Unicode filenames', async (context) => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'media-tagger-unicode-'));
   context.after(() => fs.rm(directory, { recursive: true, force: true }));
   const asciiPath = await fixture(directory, 'jpg');
@@ -40,6 +40,23 @@ test('reads and writes metadata for Unicode Windows filenames', async (context) 
   assert.equal(added.after.hasTag, true);
   const removed = await exiftool.removeTag(filePath);
   assert.equal(removed.after.hasTag, false);
+});
+
+test('selects the platform-specific ExifTool executable in development and packaged apps', () => {
+  const appPath = path.join('workspace', 'app');
+  const resourcesPath = path.join('installed', 'resources');
+  assert.equal(
+    getExifToolPath({ appPath, resourcesPath, platform: 'win32' }),
+    path.join(appPath, 'node_modules', 'exiftool-vendored.exe', 'bin', 'exiftool.exe'),
+  );
+  assert.equal(
+    getExifToolPath({ appPath, resourcesPath, platform: 'darwin' }),
+    path.join(appPath, 'node_modules', 'exiftool-vendored.pl', 'bin', 'exiftool'),
+  );
+  assert.equal(
+    getExifToolPath({ appPath, resourcesPath, packaged: true, platform: 'darwin' }),
+    path.join(resourcesPath, 'app.asar.unpacked', 'node_modules', 'exiftool-vendored.pl', 'bin', 'exiftool'),
+  );
 });
 
 for (const extension of ['jpg', 'png', 'tiff', 'webp']) {

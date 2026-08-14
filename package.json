@@ -1,7 +1,7 @@
 {
   "name": "amazon-adding-metadata-tag",
-  "version": "1.3.5",
-  "description": "Private local Windows reviewer for Amazon synthetic-performer XMP tagging",
+  "version": "1.4.0",
+  "description": "Private local Windows and macOS reviewer for Amazon synthetic-performer XMP tagging",
   "main": "electron/main.cjs",
   "author": "khooyc (https://github.com/khooyc)",
   "license": "UNLICENSED",
@@ -14,12 +14,19 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
-    "dist": "npm run test && electron-builder --win nsis",
-    "pack": "electron-builder --dir --win"
+    "dist": "npm run dist:win",
+    "dist:win": "npm run test && electron-builder --win nsis",
+    "dist:mac": "npm run test && electron-builder --mac dmg",
+    "pack": "npm run pack:win",
+    "pack:win": "electron-builder --dir --win",
+    "pack:mac": "electron-builder --dir --mac"
   },
   "dependencies": {
-    "exiftool-vendored.exe": "13.59.2",
     "sharp": "0.35.3"
+  },
+  "optionalDependencies": {
+    "exiftool-vendored.exe": "13.59.2",
+    "exiftool-vendored.pl": "13.59.2"
   },
   "devDependencies": {
     "electron": "43.4.0",
@@ -29,20 +36,14 @@
     "appId": "local.khoom.listingmediatagreviewer",
     "productName": "Amazon - Adding Metadata Tag",
     "asar": true,
+    "asarUnpack": [
+      "node_modules/exiftool-vendored.*/**/*"
+    ],
     "files": [
       "electron/**/*",
       "src/**/*",
       "build/icon.png",
       "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "node_modules/exiftool-vendored.exe/bin",
-        "to": "exiftool",
-        "filter": [
-          "**/*"
-        ]
-      }
     ],
     "win": {
       "icon": "build/icon.png",
@@ -50,6 +51,16 @@
         "nsis"
       ],
       "artifactName": "Amazon-Adding-Metadata-Tag-Setup-${version}.${ext}"
+    },
+    "mac": {
+      "icon": "build/icon.png",
+      "category": "public.app-category.business",
+      "identity": null,
+      "hardenedRuntime": false,
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "Amazon-Adding-Metadata-Tag-${version}-mac-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,

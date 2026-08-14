@@ -1,0 +1,38 @@
+name: Build macOS installers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x64
+    runs-on: ${{ matrix.runner }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run dist:mac -- --${{ matrix.arch }}
+      - name: Verify packaged ExifTool
+        shell: bash
+        run: |
+          exiftool_path="$(find dist -type f -path '*/app.asar.unpacked/node_modules/exiftool-vendored.pl/bin/exiftool' -print -quit)"
+          test -n "$exiftool_path"
+          "$exiftool_path" -ver | grep '^13\.59'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Amazon-Adding-Metadata-Tag-mac-${{ matrix.arch }}
+          path: dist/*.dmg
+          if-no-files-found: error

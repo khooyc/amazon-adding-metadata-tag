@@ -51,9 +51,9 @@ test('scan groups by first Seller SKU folder and remembers no-tag decisions by c
 });
 
 test('path guard rejects files outside the selected media folder', () => {
-  const root = path.resolve('C:\\MediaLibrary');
+  const root = path.resolve(os.tmpdir(), 'MediaLibrary');
   assert.equal(assertWithinRoot(root, path.join(root, 'SKU-1', 'image.jpg')), path.join(root, 'SKU-1', 'image.jpg'));
-  assert.throws(() => assertWithinRoot(root, path.resolve('C:\\Elsewhere\\image.jpg')), /outside/);
+  assert.throws(() => assertWithinRoot(root, path.resolve(os.tmpdir(), 'Elsewhere', 'image.jpg')), /outside/);
   assert.throws(() => assertWithinRoot(root, root), /outside/);
 });
 

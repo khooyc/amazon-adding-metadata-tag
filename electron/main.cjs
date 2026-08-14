@@ -93,6 +93,7 @@ async function createWindow() {
 function setupIpc() {
   registerHandler('app:get-state', async () => ({
     appName: APP_NAME,
+    platform: process.platform,
     settings: store.snapshot().settings,
     exifToolVersion: await exiftool.version(),
   }));
