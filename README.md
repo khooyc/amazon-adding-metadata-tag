@@ -64,6 +64,16 @@ npm run dist:mac -- --arm64
 
 The packaged application bundles ExifTool 13.59 through pinned platform-specific `exiftool-vendored` packages. Windows releases use an NSIS `.exe`; macOS releases provide separate `.dmg` files for Apple Silicon (`arm64`) and Intel (`x64`). Native macOS artifacts are built and tested on GitHub-hosted macOS runners.
 
-## Installing on macOS
+## First launch on macOS
 
-Download the `.dmg` matching the Mac: `arm64` for Apple Silicon (M1 or newer) or `x64` for Intel. Open it and drag the app into Applications. The current free build is not Apple Developer ID signed or notarized, so on first launch macOS may require **Control-click app > Open > Open**, or **System Settings > Privacy & Security > Open Anyway**. Review the release notes and checksum before installing.
+The free Mac build is not Apple Developer ID signed or notarized. This is why macOS may show a warning saying that Apple cannot verify the developer or that the app cannot be opened. The warning is expected for this unsigned release; it does not mean the app requires an Apple Developer account to run.
+
+To open it safely:
+
+1. Download the `.dmg` from this repository’s [Releases page](https://github.com/khooyc/amazon-adding-metadata-tag/releases). Choose `arm64` for Apple Silicon (M1 or newer) or `x64` for Intel.
+2. Open the `.dmg` and drag **Amazon - Adding Metadata Tag** into **Applications**.
+3. Open **Applications**, then Control-click the app and choose **Open**.
+4. In the confirmation dialog, choose **Open** again.
+5. If macOS still blocks it, open **System Settings → Privacy & Security**, find the message about the blocked app, and select **Open Anyway**.
+
+You normally need to approve only the first launch of each newly downloaded version. Do not disable Gatekeeper globally or run unfamiliar commands from third-party websites. Review the release notes and checksum before installing.
