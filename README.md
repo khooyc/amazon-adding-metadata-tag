@@ -10,6 +10,12 @@ This tool may make mistakes. Always review your files, check the latest applicab
 
 See [Software Licence & Disclaimer](SOFTWARE_LICENCE_AND_DISCLAIMER.md) for the full terms. This independent tool is not endorsed by, sponsored by, or affiliated with Amazon.
 
+## What is preserved on GitHub
+
+The repository preserves the application source code, documentation, legal disclaimer, logo assets, tests, and macOS build workflow. Published Windows and macOS installers are kept in the [Releases](https://github.com/khooyc/amazon-adding-metadata-tag/releases) section, so they remain available even if the local project folder is removed.
+
+Your media files, local review decisions, safety backups, and app settings are intentionally not uploaded. They stay on the computer where you use the app.
+
 ## Languages, appearance, and onboarding
 
 - Interface languages: English, Simplified Chinese, and Traditional Chinese.
