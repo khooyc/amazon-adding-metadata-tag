@@ -1,6 +1,6 @@
 {
   "name": "amazon-adding-metadata-tag",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "description": "Private local Windows reviewer for Amazon synthetic-performer XMP tagging",
   "main": "electron/main.cjs",
   "author": "khooyc (https://github.com/khooyc)",

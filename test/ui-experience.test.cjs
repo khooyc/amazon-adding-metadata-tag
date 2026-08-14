@@ -24,6 +24,10 @@ test('English, Simplified Chinese, and Traditional Chinese contain the same tran
   assert.equal(i18n.normalizeLocale('zh-Hant-TW'), 'zh-TW');
   assert.equal(i18n.normalizeLocale('zh-SG'), 'zh-CN');
   assert.equal(i18n.translate('zh-TW', 'selection.selected', { count: 8 }), '已選擇 8 項');
+  assert.match(JSON.stringify(i18n.translations['zh-CN']), /亚马逊/);
+  assert.doesNotMatch(JSON.stringify(i18n.translations['zh-CN']), /Amazon/);
+  assert.match(JSON.stringify(i18n.translations['zh-TW']), /亞馬遜/);
+  assert.doesNotMatch(JSON.stringify(i18n.translations['zh-TW']), /Amazon/);
 });
 
 test('localized settings, dark mode, tutorial, and persistent legal warning are wired into the packaged UI', () => {
