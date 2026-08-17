@@ -16,6 +16,12 @@ The repository preserves the application source code, documentation, legal discl
 
 Your media files, local review decisions, safety backups, and app settings are intentionally not uploaded. They stay on the computer where you use the app.
 
+## Update notifications
+
+When the app opens, it checks the public GitHub Releases endpoint for the latest stable release of this repository. A small status indicator appears in the header: **Up to date**, **Update available**, or **Updates unavailable**. If an update is available, clicking the indicator opens the trusted GitHub release page. The check sends no media paths, file contents, review decisions, or app settings, and updates are never downloaded or installed automatically.
+
+To publish a notification-triggering update, increase the version in `package.json`, create a matching GitHub Release tag such as `v1.6.1`, and attach the installer artifacts. Draft and prerelease versions are ignored by the “latest release” check. Users who are offline simply see that update checking is unavailable and can continue using the app.
+
 ## Languages, appearance, and onboarding
 
 - Interface languages: English, Simplified Chinese, and Traditional Chinese.
@@ -27,16 +33,16 @@ A private, human-first Windows and macOS desktop app for preparing local Amazon 
 
 ## Safe workflow
 
-1. Organize media under `Media Library\Seller-SKU\...`.
+1. Select any media folder. Seller SKU or product subfolders are optional; media placed directly in the selected folder appears under **No SKU**.
 2. Open the app, choose that Media Library folder, and press **Scan**. No background monitoring occurs.
-3. Review the untagged images and videos for one Seller SKU. Click anywhere on a media card to select or deselect it, then choose **Add tag & verify** or **No tag needed**. Videos carry a red **WATCH FULL VIDEO BEFORE REVIEW** warning; watch the entire video before making a decision. **Show in folder** never changes the selection.
+3. Review the untagged images and videos by optional media group. Click anywhere on a media card to select or deselect it, then choose **Add tag & verify** or **No tag needed**. Videos carry a red **WATCH FULL VIDEO BEFORE REVIEW** warning; watch the entire video before making a decision. **Show in folder** never changes the selection.
 4. Upload the prepared files to Seller Central manually. The app does not log in to Amazon or claim an upload succeeded.
 
-Use **Select visible** for the current Seller SKU/search result, or **Select all media** to select the complete current queue across every Seller SKU. In **Duplicates & visual variants**, select a false visual match and choose **Not a duplicate** to remember that decision by content fingerprint; byte-for-byte exact duplicates cannot be dismissed.
+Use **Select visible** for the current group/search result, or **Select all media** to select the complete current queue across every group. In **Duplicates & visual variants**, select a false visual match and choose **Not a duplicate** to remember that decision by content fingerprint; byte-for-byte exact duplicates cannot be dismissed.
 
 Long operations show measured progress from 0% to 100%, with the current stage and file count. Unicode filenames (including Chinese characters) and UNC network-share paths are passed to ExifTool through a UTF-8-safe argument channel.
 
-MP4 and MOV videos enter the normal review queue and can be tagged, verified, or marked **No tag needed**. The app does not analyze their content; the red warning requires a human to watch the full video first. AVI, MKV, and other unsupported formats remain under **Other files**.
+Recognized videos enter the normal Media review queue, including AVI, MKV, WebM, WMV, MPEG, TS, VOB, and other common containers. The app does not analyze their content; the red warning requires a human to watch the full video first. Only containers that the bundled ExifTool can safely write and re-read may use **Add tag & verify**. Other video containers remain visible in Media with a conversion/remux warning.
 
 ## What “verified locally” means
 
@@ -51,15 +57,17 @@ The app creates a private local safety backup before the first mutation, appends
 - Tag removal is a separately confirmed correction.
 - File deletion uses the Windows Recycle Bin or macOS Trash only.
 - Safety backups are eligible for manual cleanup after 30 days and are never deleted automatically.
-- Unsupported files, files without a Seller SKU folder, and metadata warnings are surfaced instead of silently skipped. Supported videos remain visible in the review queue until a human decision is recorded.
+- Unsupported non-media files and metadata warnings are surfaced instead of silently skipped. Media does not require a Seller SKU folder. Recognized videos remain visible in the review queue until a human decision is recorded.
 
 ## Supported still-image formats
 
 JPEG/JPG, PNG, TIFF/TIF, and WebP.
 
-## Supported video formats
+## Video formats
 
-MP4 and MOV. Video content is never classified automatically: watch the full file, then use the same **Add tag & verify** or **No tag needed** action as images.
+Recognized video containers include 360, 3G2/3GP, ASF, AVI, F4V, FLV, LRV, M2TS, M4V, MKV, MOV, MP4, MPEG/MPG, MQV, MTS, MXF, OGV, QT, RM/RMVB, TS, VOB, WebM, and WMV. Video content is never classified automatically: watch the full file before making a decision.
+
+Embedded XMP tagging and verification are enabled for 360, 3G2/3GP, F4V, LRV, M4V, MOV, MP4, MQV, and QT. Other recognized video containers stay in the Media queue but show a warning to convert or remux to a writable container first; the app never creates a sidecar or falsely reports those files as tagged.
 
 ## Development
 
@@ -73,6 +81,8 @@ npm run dist:mac -- --arm64
 ```
 
 The packaged application bundles ExifTool 13.59 through pinned platform-specific `exiftool-vendored` packages. Windows releases use an NSIS `.exe`; macOS releases provide separate `.dmg` files for Apple Silicon (`arm64`) and Intel (`x64`). Native macOS artifacts are built and tested on GitHub-hosted macOS runners.
+
+The Windows installer offers a checked-by-default **Create a Start Menu shortcut** option. Clear it if you do not want the shortcut; this does not affect the desktop shortcut or the installed application.
 
 ## First launch on macOS
 

@@ -33,11 +33,11 @@ A copy of a media file currently used in an Amazon listing; the Media Library re
 _Avoid_: Master file, original
 
 **Media Set**:
-All master images and videos associated with one Seller SKU, regardless of marketplace, media role, or version.
-_Avoid_: ASIN folder, product images
+A review group of master images and videos. A first-level Seller SKU or product folder may provide the group name, but grouping is optional; media directly inside the selected folder belongs to the localized No SKU group.
+_Avoid_: Required SKU folder, ASIN folder
 
 **Media Review Batch**:
-A human-review group containing still images and supported videos for one Seller SKU; reviewers may approve selected files together and deselect unrelated files before deciding. Videos carry a visible warning and must be watched in full before the human decision.
+A human-review group containing still images and recognized videos, with or without a Seller SKU; reviewers may approve selected files together and deselect unrelated files before deciding. Videos carry a visible warning and must be watched in full before the human decision. Containers that cannot safely embed XMP remain visible in Media but cannot be reported as tagged.
 _Avoid_: Automatic batch approval, folder approval
 
 **Exact Duplicate**:

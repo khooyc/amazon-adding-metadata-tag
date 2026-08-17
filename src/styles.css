@@ -45,6 +45,16 @@ button { cursor: pointer; }
 .brand h1 { font-size: 17px; margin: 0; letter-spacing: -0.01em; }
 .brand p { margin: 3px 0 0; font-size: 12px; color: var(--muted); }
 .folder-controls { display: flex; gap: 10px; }
+.update-indicator { min-height: 32px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 99px; padding: 0 11px; background: transparent; color: var(--muted); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.update-indicator:not(:disabled):hover, .update-indicator:focus-visible { border-color: var(--green); color: var(--green); outline: none; }
+.update-indicator:disabled { cursor: wait; }
+.update-indicator[data-state="available"] { border-color: #d9ad67; background: var(--amber-soft); color: var(--amber); }
+.update-indicator[data-state="available"]:hover, .update-indicator[data-state="available"]:focus-visible { border-color: var(--amber); color: var(--amber); }
+.update-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #82958b; }
+.update-indicator[data-state="checking"] .update-dot { animation: update-pulse 1.2s ease-in-out infinite; }
+.update-indicator[data-state="current"] .update-dot { background: #2b8a61; box-shadow: 0 0 0 3px rgba(43,138,97,.12); }
+.update-indicator[data-state="available"] .update-dot { background: var(--amber); box-shadow: 0 0 0 3px rgba(165,99,17,.14); }
+@keyframes update-pulse { 50% { opacity: .35; } }
 .folder-strip { height: 38px; display: flex; align-items: center; gap: 9px; padding: 0 29px; background: #eaf1ed; color: #375448; font-size: 12px; border-bottom: 1px solid #d5e2db; white-space: nowrap; overflow: hidden; }
 .folder-strip span:last-child { overflow: hidden; text-overflow: ellipsis; }
 .status-dot { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #82958b; }
@@ -176,6 +186,10 @@ code { background: #eeeee8; border-radius: 4px; padding: 2px 5px; font-family: C
 }
 
 html[data-theme="dark"] .topbar { background: var(--surface); }
+html[data-theme="dark"] .update-indicator { border-color: var(--line); color: var(--muted); }
+html[data-theme="dark"] .update-indicator:not(:disabled):hover, html[data-theme="dark"] .update-indicator:focus-visible { border-color: #fff; color: #fff; }
+html[data-theme="dark"] .update-indicator[data-state="available"] { border-color: #a97937; background: #3a2d1a; color: #f0bb6b; }
+html[data-theme="dark"] .update-indicator[data-state="available"]:hover, html[data-theme="dark"] .update-indicator[data-state="available"]:focus-visible { border-color: #f0bb6b; color: #f0bb6b; }
 html[data-theme="dark"] .folder-strip { background: #192a22; color: #aed0c0; border-bottom-color: var(--line); }
 html[data-theme="dark"] .sidebar { background: #171d1a; }
 html[data-theme="dark"] .nav-item { color: #b7c1bb; }

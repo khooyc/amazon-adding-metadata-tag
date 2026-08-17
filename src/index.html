@@ -19,6 +19,10 @@
           </div>
         </div>
         <div class="folder-controls">
+          <button id="update-indicator" class="update-indicator" type="button" data-state="checking" aria-live="polite" data-i18n-aria-label="update.aria">
+            <span class="update-dot" aria-hidden="true"></span>
+            <span id="update-label" data-i18n="update.checking">Checking for updates...</span>
+          </button>
           <button id="choose-folder" class="button button-secondary" data-i18n="button.chooseFolder">Choose media folder</button>
           <button id="scan-folder" class="button button-primary" data-i18n="button.scan" disabled>Scan</button>
         </div>
@@ -40,7 +44,7 @@
           </nav>
 
           <div class="sidebar-heading">
-            <span data-i18n="sidebar.sellerSku">Seller SKU</span>
+            <span data-i18n="sidebar.sellerSku">Media groups (optional SKU)</span>
             <button id="all-skus" class="link-button" data-i18n="sidebar.all">All</button>
           </div>
           <div id="sku-list" class="sku-list"></div>

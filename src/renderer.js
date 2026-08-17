@@ -4,6 +4,7 @@ const { normalizeLocale, supportedLocales, translate } = window.appI18n;
 const LANGUAGE_KEY = 'amazon-metadata-tag-language-v1';
 const THEME_KEY = 'amazon-metadata-tag-theme-v1';
 const TUTORIAL_SEEN_KEY = 'amazon-metadata-tag-tutorial-v1';
+const NO_SKU_GROUP = '__NO_SKU__';
 
 function initialLocale() {
   const saved = localStorage.getItem(LANGUAGE_KEY);
@@ -28,6 +29,12 @@ const state = {
   theme: initialTheme(),
   tutorialStep: 0,
   progress: null,
+  update: {
+    state: 'checking',
+    currentVersion: null,
+    latestVersion: null,
+    releaseUrl: null,
+  },
 };
 
 const elements = Object.fromEntries([
@@ -38,6 +45,7 @@ const elements = Object.fromEntries([
   'view-description', 'progress-overlay', 'progress-title', 'progress-detail', 'progress-percent', 'progress-track', 'progress-fill',
   'confirm-dialog', 'dialog-eyebrow', 'dialog-title', 'dialog-message', 'dialog-files', 'dialog-confirm', 'toast-region',
   'backup-manager', 'software-disclaimer-link', 'creator-link',
+  'update-indicator', 'update-label',
   'language-select', 'theme-select', 'tutorial-open', 'tutorial-dialog', 'tutorial-step-count', 'tutorial-dots',
   'tutorial-icon', 'tutorial-step-title', 'tutorial-step-body', 'tutorial-skip', 'tutorial-back', 'tutorial-next',
   'count-review', 'count-tagged', 'count-cleared', 'count-duplicates', 'count-issues',
@@ -73,6 +81,29 @@ function t(key, variables = {}) {
   return translate(state.locale, platformKey, variables);
 }
 
+function renderUpdateStatus(status = state.update) {
+  state.update = { ...state.update, ...(status || {}) };
+  const statusKey = state.update.state || 'unavailable';
+  const labelKey = statusKey === 'available'
+    ? 'update.available'
+    : statusKey === 'current'
+      ? 'update.current'
+      : statusKey === 'checking'
+        ? 'update.checking'
+        : 'update.unavailable';
+  const variables = statusKey === 'available' ? { version: state.update.latestVersion || '' } : {};
+  elements['update-indicator'].dataset.state = statusKey;
+  elements['update-indicator'].classList.toggle('has-update', statusKey === 'available');
+  elements['update-indicator'].disabled = statusKey === 'checking';
+  elements['update-label'].textContent = t(labelKey, variables);
+  elements['update-indicator'].setAttribute('aria-label', t('update.aria'));
+  elements['update-indicator'].title = t(labelKey, variables);
+}
+
+function groupLabel(group) {
+  return group === NO_SKU_GROUP ? t('group.noSku') : group;
+}
+
 function resolvedTheme() {
   return state.theme === 'system' ? (systemTheme.matches ? 'dark' : 'light') : state.theme;
 }
@@ -102,6 +133,7 @@ function applyStaticTranslations() {
       ? t(state.progress.detailKey, state.progress.variables)
       : state.progress.detail;
   }
+  renderUpdateStatus();
   renderTutorial();
   if (state.scan) render();
 }
@@ -192,6 +224,8 @@ api.onProgress(({ percent, detail, key, variables }) => {
   if (state.busy) setProgress(percent, detail, key, variables || {});
 });
 
+api.onUpdateStatus((status) => renderUpdateStatus(status));
+
 function counts() {
   const items = state.scan?.items || [];
   return {
@@ -199,7 +233,7 @@ function counts() {
     tagged: items.filter((item) => item.status === 'tagged').length,
     cleared: items.filter((item) => item.status === 'cleared').length,
     duplicates: items.filter((item) => item.exactDuplicateCount > 1 || item.visualVariantGroup).length,
-    issues: (state.scan?.unsupported.length || 0) + (state.scan?.unassigned.length || 0),
+    issues: (state.scan?.unsupported.length || 0) + (state.scan?.unassigned.length || 0) + (state.scan?.issues.length || 0),
   };
 }
 
@@ -222,7 +256,7 @@ function itemsForCurrentView() {
   if (state.sku) items = items.filter((item) => item.sku === state.sku);
   if (state.query) {
     const query = state.query.toLocaleLowerCase();
-    items = items.filter((item) => `${item.sku} ${item.name} ${item.relativePath}`.toLocaleLowerCase().includes(query));
+    items = items.filter((item) => `${groupLabel(item.sku)} ${item.name} ${item.relativePath}`.toLocaleLowerCase().includes(query));
   }
   return items;
 }
@@ -254,9 +288,9 @@ function renderSidebar() {
     const relevant = state.view === 'duplicates'
       ? state.scan.items.filter((item) => item.sku === summary.sku && (item.exactDuplicateCount > 1 || item.visualVariantGroup)).length
       : state.view === 'issues'
-        ? [...state.scan.unsupported, ...state.scan.unassigned].filter((item) => item.sku === summary.sku).length
+        ? [...state.scan.unsupported, ...state.scan.unassigned, ...state.scan.issues].filter((item) => item.sku === summary.sku).length
         : summary[state.view] || 0;
-    return `<button class="sku-button ${state.sku === summary.sku ? 'active' : ''}" data-sku="${escapeText(summary.sku)}"><span>${escapeText(summary.sku)}</span><span>${relevant}</span></button>`;
+    return `<button class="sku-button ${state.sku === summary.sku ? 'active' : ''}" data-sku="${escapeText(summary.sku)}"><span>${escapeText(groupLabel(summary.sku))}</span><span>${relevant}</span></button>`;
   }).join('');
   elements['sku-list'].querySelectorAll('[data-sku]').forEach((button) => button.addEventListener('click', () => {
     state.sku = button.dataset.sku;
@@ -288,6 +322,7 @@ function exactKeepPath(item) {
 function mediaCard(item) {
   const isVideo = item.mediaType === 'video';
   const badges = [];
+  if (isVideo && item.tagWritable === false) badges.push(`<span class="badge badge-warning">${t('badge.videoTagUnsupported')}</span>`);
   if (item.tagCount > 1) badges.push(`<span class="badge badge-warning">${t('badge.tagCount', { count: item.tagCount })}</span>`);
   else if (item.hasTag) badges.push(`<span class="badge badge-ok">${t('badge.verified')}</span>`);
   if (item.exactDuplicateCount > 1) {
@@ -303,8 +338,9 @@ function mediaCard(item) {
       </div>
       <div class="card-body">
         <p class="card-title" title="${escapeText(item.name)}">${escapeText(item.name)}</p>
-        <div class="card-meta"><span>${escapeText(item.sku)}</span><span>${isVideo ? t('card.videoFile') : `${item.width || '?'} × ${item.height || '?'}`}</span><span>${formatBytes(item.size)}</span></div>
+        <div class="card-meta"><span>${escapeText(groupLabel(item.sku))}</span><span>${isVideo ? t('card.videoFile') : `${item.width || '?'} × ${item.height || '?'}`}</span><span>${formatBytes(item.size)}</span></div>
         ${isVideo ? `<p class="video-review-warning" role="note">${escapeText(t('card.videoWarning'))}</p>` : ''}
+        ${isVideo && item.tagWritable === false ? `<p class="video-review-warning" role="note">${escapeText(t('card.videoTagUnsupported'))}</p>` : ''}
         <div class="card-path" title="${escapeText(item.relativePath)}">${escapeText(item.relativePath)}</div>
       </div>
       <div class="card-footer"><button data-show-folder>${t('card.showInFolder')}</button></div>
@@ -333,6 +369,7 @@ function renderIssues() {
   const all = [
     ...state.scan.unsupported.map((item) => ({ ...item, kind: t('issue.unsupported', { extension: item.extension }) })),
     ...state.scan.unassigned.map((item) => ({ ...item, kind: t('issue.notInsideSku') })),
+    ...state.scan.issues.map((item) => ({ ...item, kind: t('issue.unreadable', { reason: item.reason }) })),
   ].filter((item) => (!state.sku || item.sku === state.sku) && (!state.query || `${item.sku || ''} ${item.name} ${item.path}`.toLocaleLowerCase().includes(state.query.toLocaleLowerCase())));
   elements.gallery.innerHTML = all.map((item) => `
     <article class="media-card" data-path="${escapeText(item.path)}">
@@ -396,7 +433,7 @@ function render() {
   const [eyebrowKey, titleKey, descriptionKey] = VIEW_COPY[state.view];
   const title = t(titleKey);
   elements['view-eyebrow'].textContent = t(eyebrowKey);
-  elements['view-title'].textContent = state.sku ? `${title} — ${state.sku}` : title;
+  elements['view-title'].textContent = state.sku ? `${title} — ${groupLabel(state.sku)}` : title;
   elements['view-description'].textContent = t(descriptionKey);
   elements['select-visible'].classList.toggle('hidden', !['review', 'tagged'].includes(state.view));
   elements['select-all-media'].classList.toggle('hidden', !['review', 'tagged', 'duplicates'].includes(state.view));
@@ -448,13 +485,22 @@ function selectedPaths() {
 }
 
 async function runReviewAction(action) {
-  const paths = selectedPaths();
+  let paths = selectedPaths();
   if (!paths.length) return;
+  let skippedUnsupported = 0;
+  if (action === 'tag') {
+    const items = allItemsByPath();
+    const writablePaths = paths.filter((filePath) => items.get(filePath)?.tagWritable !== false);
+    skippedUnsupported = paths.length - writablePaths.length;
+    paths = writablePaths;
+    if (!paths.length) return toast(t('toast.videoTagUnsupported', { count: skippedUnsupported }), 'error');
+  }
   setBusy(true, action === 'tag' ? 'busy.tagging' : 'busy.recording', action === 'tag' ? 'busy.tagDetail' : 'busy.clearDetail');
   try {
     const results = action === 'tag' ? await api.tag(state.root, paths) : await api.clear(state.root, paths);
     const failed = results.filter((result) => !result.ok);
     if (failed.length) toast(t('toast.filesFailed', { count: failed.length, message: failed[0].message || '' }), 'error');
+    else if (action === 'tag' && skippedUnsupported) toast(t('toast.taggedSkippedUnsupported', { tagged: results.length, skipped: skippedUnsupported }), 'error');
     else toast(t(action === 'tag' ? 'toast.tagged' : 'toast.cleared', { count: results.length }));
     await scan({ force: true });
   } catch (error) {
@@ -550,6 +596,7 @@ async function dismissVisualVariants() {
 }
 
 async function manageBackups() {
+  if (state.busy) return;
   try {
     const expired = await api.listExpiredBackups();
     if (!expired.length) return toast(t('toast.noExpiredBackups'));
@@ -561,11 +608,33 @@ async function manageBackups() {
       paths,
       confirmLabel: t('confirm.backupLabel'),
     })) return;
+    setBusy(true, 'confirm.backupLabel', 'busy.applyConfirmed');
     const results = await api.deleteExpiredBackups(paths);
     const failed = results.filter((result) => !result.ok);
     failed.length ? toast(t('toast.backupsFailed', { count: failed.length }), 'error') : toast(t('toast.backupsDeleted', { count: results.length }));
   } catch (error) {
     toast(error.message, 'error');
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function handleUpdateIndicator() {
+  if (state.update.state === 'available' && state.update.releaseUrl) {
+    try {
+      await api.openUpdate(state.update.releaseUrl);
+    } catch (error) {
+      toast(t('toast.updateOpenFailed', { message: error.message }), 'error');
+    }
+    return;
+  }
+  renderUpdateStatus({ state: 'checking' });
+  try {
+    const status = await api.checkForUpdate();
+    renderUpdateStatus(status);
+  } catch (error) {
+    renderUpdateStatus({ state: 'unavailable' });
+    toast(t('toast.updateCheckFailed', { message: error.message }), 'error');
   }
 }
 
@@ -598,6 +667,7 @@ elements['trash-files'].addEventListener('click', () => destructiveFileAction('t
 elements['normalize-tag'].addEventListener('click', normalizeTags);
 elements['not-duplicate'].addEventListener('click', dismissVisualVariants);
 elements['backup-manager'].addEventListener('click', manageBackups);
+elements['update-indicator'].addEventListener('click', handleUpdateIndicator);
 elements['software-disclaimer-link'].addEventListener('click', async () => {
   try {
     await api.openSoftwareDisclaimer();
@@ -642,6 +712,7 @@ applyStaticTranslations();
   try {
     const appState = await api.getState();
     state.platform = appState.platform || state.platform;
+    if (appState.update) renderUpdateStatus(appState.update);
     applyStaticTranslations();
     if (appState.settings.lastRoot) elements['folder-path'].textContent = t('folder.lastUsed', { path: appState.settings.lastRoot });
   } catch (error) {

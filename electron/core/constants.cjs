@@ -7,10 +7,16 @@ const DATA_DIRECTORY_NAME = '.listing-media-tagger';
 const SOFTWARE_DISCLAIMER_URL = 'https://github.com/khooyc/amazon-adding-metadata-tag/blob/main/SOFTWARE_LICENCE_AND_DISCLAIMER.md';
 const CREATOR_PROFILE_URL = 'https://github.com/khooyc';
 const SUPPORTED_IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.tif', '.tiff', '.webp']);
-const MANUAL_VIDEO_EXTENSIONS = new Set(['.mp4', '.mov']);
+const NO_SKU_GROUP = '__NO_SKU__';
+const WRITABLE_VIDEO_EXTENSIONS = new Set(['.360', '.3g2', '.3gp', '.3gp2', '.3gpp', '.f4v', '.lrv', '.m4v', '.mov', '.mp4', '.mqv', '.qt']);
+const VIDEO_EXTENSIONS = new Set([
+  ...WRITABLE_VIDEO_EXTENSIONS,
+  '.asf', '.avi', '.flv', '.m2ts', '.mkv', '.mpeg', '.mpg', '.mts', '.mxf', '.ogv', '.rm', '.rmvb', '.ts', '.vob', '.webm', '.wmv',
+]);
 
-function normalizePath(filePath) {
-  return path.resolve(filePath).toLocaleLowerCase('en-US');
+function normalizePath(filePath, platform = process.platform) {
+  const resolved = path.resolve(filePath);
+  return platform === 'win32' ? resolved.toLocaleLowerCase('en-US') : resolved;
 }
 
 module.exports = {
@@ -21,6 +27,8 @@ module.exports = {
   SOFTWARE_DISCLAIMER_URL,
   CREATOR_PROFILE_URL,
   SUPPORTED_IMAGE_EXTENSIONS,
-  MANUAL_VIDEO_EXTENSIONS,
+  NO_SKU_GROUP,
+  VIDEO_EXTENSIONS,
+  WRITABLE_VIDEO_EXTENSIONS,
   normalizePath,
 };

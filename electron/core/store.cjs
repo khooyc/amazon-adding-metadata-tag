@@ -1,5 +1,6 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { normalizePath } = require('./constants.cjs');
 
 const DEFAULT_STATE = Object.freeze({
   version: 1,
@@ -48,14 +49,28 @@ class StateStore {
     return JSON.parse(JSON.stringify(this.state));
   }
 
+  async writeState(state) {
+    await fs.mkdir(path.dirname(this.stateFile), { recursive: true });
+    const temporaryFile = `${this.stateFile}.${process.pid}.tmp`;
+    await fs.writeFile(temporaryFile, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
+    await fs.rename(temporaryFile, this.stateFile);
+  }
+
   async save() {
-    this.writeQueue = this.writeQueue.then(async () => {
-      await fs.mkdir(path.dirname(this.stateFile), { recursive: true });
-      const temporaryFile = `${this.stateFile}.${process.pid}.tmp`;
-      await fs.writeFile(temporaryFile, `${JSON.stringify(this.state, null, 2)}\n`, 'utf8');
-      await fs.rename(temporaryFile, this.stateFile);
-    });
+    this.writeQueue = this.writeQueue.catch(() => {}).then(() => this.writeState(this.state));
     return this.writeQueue;
+  }
+
+  async updateState(mutator) {
+    const operation = this.writeQueue.catch(() => {}).then(async () => {
+      const nextState = this.snapshot();
+      const result = mutator(nextState);
+      await this.writeState(nextState);
+      this.state = nextState;
+      return result;
+    });
+    this.writeQueue = operation.then(() => undefined, () => undefined);
+    return operation;
   }
 
   getDecision(contentHash) {
@@ -68,10 +83,11 @@ class StateStore {
       decidedAt: new Date().toISOString(),
       ...details,
     };
-    this.state.decisions[contentHash] = record;
-    this.appendAudit('decision-recorded', { contentHash, ...record });
-    await this.save();
-    return record;
+    return this.updateState((state) => {
+      state.decisions[contentHash] = record;
+      this.appendAudit('decision-recorded', { contentHash, ...record }, state);
+      return record;
+    });
   }
 
   isVisualVariantDismissed(contentHash) {
@@ -83,41 +99,48 @@ class StateStore {
       dismissedAt: new Date().toISOString(),
       ...details,
     };
-    this.state.visualVariantDismissals[contentHash] = record;
-    this.appendAudit('visual-variant-dismissed', { contentHash, ...record });
-    await this.save();
-    return record;
+    return this.updateState((state) => {
+      state.visualVariantDismissals[contentHash] = record;
+      this.appendAudit('visual-variant-dismissed', { contentHash, ...record }, state);
+      return record;
+    });
   }
 
-  getBackup(normalizedFilePath) {
-    return this.state.backups[normalizedFilePath] || null;
+  getBackup(normalizedFilePath, sourceHash = null) {
+    const direct = this.state.backups[normalizedFilePath];
+    const matching = Object.values(this.state.backups).filter((backup) => (
+      backup && backup.sourcePath && normalizePath(backup.sourcePath) === normalizedFilePath
+    ));
+    if (sourceHash) return [direct, ...matching].find((backup) => backup?.sourceHash === sourceHash) || null;
+    return direct || matching.sort((first, second) => Date.parse(second.createdAt) - Date.parse(first.createdAt))[0] || null;
   }
 
   async setBackup(normalizedFilePath, backup) {
-    this.state.backups[normalizedFilePath] = backup;
-    this.appendAudit('backup-created', { normalizedFilePath, ...backup });
-    await this.save();
+    const backupKey = `${normalizedFilePath}::${backup.sourceHash}`;
+    await this.updateState((state) => {
+      state.backups[backupKey] = backup;
+      this.appendAudit('backup-created', { normalizedFilePath, backupKey, ...backup }, state);
+    });
   }
 
-  async removeBackup(normalizedFilePath) {
-    const backup = this.state.backups[normalizedFilePath];
-    delete this.state.backups[normalizedFilePath];
-    this.appendAudit('backup-removed', { normalizedFilePath, backup });
-    await this.save();
+  async removeBackup(backupKey) {
+    await this.updateState((state) => {
+      const backup = state.backups[backupKey];
+      delete state.backups[backupKey];
+      this.appendAudit('backup-removed', { backupKey, backup }, state);
+    });
   }
 
   async setSetting(name, value) {
-    this.state.settings[name] = value;
-    await this.save();
+    await this.updateState((state) => { state.settings[name] = value; });
   }
 
-  appendAudit(action, details = {}) {
-    this.state.audit.push({ action, at: new Date().toISOString(), ...details });
+  appendAudit(action, details = {}, state = this.state) {
+    state.audit.push({ action, at: new Date().toISOString(), ...details });
   }
 
   async audit(action, details = {}) {
-    this.appendAudit(action, details);
-    await this.save();
+    await this.updateState((state) => this.appendAudit(action, details, state));
   }
 }
 
