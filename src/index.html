@@ -19,6 +19,10 @@
           </div>
         </div>
         <div class="folder-controls">
+          <button id="update-indicator" class="update-indicator" type="button" data-state="checking" aria-live="polite" data-i18n-aria-label="update.aria">
+            <span class="update-dot" aria-hidden="true"></span>
+            <span id="update-label" data-i18n="update.checking">Checking for updates...</span>
+          </button>
           <button id="choose-folder" class="button button-secondary" data-i18n="button.chooseFolder">Choose media folder</button>
           <button id="scan-folder" class="button button-primary" data-i18n="button.scan" disabled>Scan</button>
         </div>
@@ -33,6 +37,7 @@
         <aside class="sidebar">
           <nav class="view-nav" aria-label="Review views">
             <button class="nav-item active" data-view="review"><span data-i18n="nav.review">Needs review</span><strong id="count-review">0</strong></button>
+            <button class="nav-item" data-view="people"><span data-i18n="nav.people">People detected</span><strong id="count-people">0</strong></button>
             <button class="nav-item" data-view="tagged"><span data-i18n="nav.tagged">Already tagged</span><strong id="count-tagged">0</strong></button>
             <button class="nav-item" data-view="cleared"><span data-i18n="nav.cleared">No tag needed</span><strong id="count-cleared">0</strong></button>
             <button class="nav-item" data-view="duplicates"><span data-i18n="nav.duplicates">Duplicate cleanup</span><strong id="count-duplicates">0</strong></button>
@@ -40,7 +45,7 @@
           </nav>
 
           <div class="sidebar-heading">
-            <span data-i18n="sidebar.sellerSku">Seller SKU</span>
+            <span data-i18n="sidebar.sellerSku">Media groups (optional SKU)</span>
             <button id="all-skus" class="link-button" data-i18n="sidebar.all">All</button>
           </div>
           <div id="sku-list" class="sku-list"></div>
@@ -97,6 +102,7 @@
               </div>
               <div class="header-controls">
                 <label class="search-field"><span data-i18n="search.label">Search</span><input id="search" type="search" placeholder="SKU or filename" data-i18n-placeholder="search.placeholder"></label>
+                <button id="detect-people" class="button button-secondary" data-i18n="button.detectPeople">Detect people</button>
                 <button id="select-visible" class="button button-secondary" data-i18n="button.selectVisible">Select visible</button>
                 <button id="select-all-media" class="button button-primary" data-i18n="button.selectAll">Select all media</button>
               </div>
@@ -172,6 +178,8 @@
     </dialog>
 
     <div id="toast-region" class="toast-region" aria-live="polite"></div>
+    <script src="../node_modules/@vladmandic/human/dist/human.js"></script>
+    <script src="people-detector.js"></script>
     <script src="i18n.js"></script>
     <script src="renderer.js"></script>
   </body>

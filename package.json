@@ -1,7 +1,7 @@
 {
   "name": "amazon-adding-metadata-tag",
-  "version": "1.4.0",
-  "description": "Private local Windows and macOS reviewer for Amazon synthetic-performer XMP tagging",
+  "version": "1.6.2",
+  "description": "Private local Windows and macOS reviewer for Amazon synthetic-performer XMP tagging of images and videos",
   "main": "electron/main.cjs",
   "author": "khooyc (https://github.com/khooyc)",
   "license": "UNLICENSED",
@@ -22,6 +22,7 @@
     "pack:mac": "electron-builder --dir --mac"
   },
   "dependencies": {
+    "@vladmandic/human": "3.3.6",
     "sharp": "0.35.3"
   },
   "optionalDependencies": {
@@ -43,6 +44,7 @@
       "electron/**/*",
       "src/**/*",
       "build/icon.png",
+      "THIRD_PARTY_NOTICES.md",
       "package.json"
     ],
     "win": {
@@ -50,7 +52,7 @@
       "target": [
         "nsis"
       ],
-      "artifactName": "Amazon-Adding-Metadata-Tag-Setup-${version}.${ext}"
+      "artifactName": "Amazon-Adding-Metadata-Tag-Windows-Setup.${ext}"
     },
     "mac": {
       "icon": "build/icon.png",
@@ -60,17 +62,19 @@
       "target": [
         "dmg"
       ],
-      "artifactName": "Amazon-Adding-Metadata-Tag-${version}-mac-${arch}.${ext}"
+      "artifactName": "Amazon-Adding-Metadata-Tag-mac-${arch}.${ext}"
     },
     "nsis": {
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
-      "allowElevation": false,
-      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Amazon - Adding Metadata Tag",
       "uninstallDisplayName": "Amazon - Adding Metadata Tag"
     }
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true
   }
 }

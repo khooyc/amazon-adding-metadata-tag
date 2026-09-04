@@ -5,8 +5,10 @@ const path = require('node:path');
 const sharp = require('sharp');
 const {
   DATA_DIRECTORY_NAME,
-  MANUAL_VIDEO_EXTENSIONS,
+  NO_SKU_GROUP,
   SUPPORTED_IMAGE_EXTENSIONS,
+  VIDEO_EXTENSIONS,
+  WRITABLE_VIDEO_EXTENSIONS,
   normalizePath,
 } = require('./constants.cjs');
 
@@ -85,11 +87,19 @@ async function enumerateMedia(rootPath) {
   const unsupported = [];
   const videos = [];
   const unassigned = [];
+  const issues = [];
   const directories = [root];
 
   while (directories.length) {
     const current = directories.pop();
-    const entries = await fsp.readdir(current, { withFileTypes: true });
+    let entries;
+    try {
+      entries = await fsp.readdir(current, { withFileTypes: true });
+    } catch (error) {
+      if (current === root) throw error;
+      issues.push({ path: current, name: path.basename(current), sku: path.relative(root, current).split(path.sep)[0] || null, reason: error.message });
+      continue;
+    }
     for (const entry of entries) {
       if (entry.name === DATA_DIRECTORY_NAME) continue;
       const fullPath = path.join(current, entry.name);
@@ -102,65 +112,109 @@ async function enumerateMedia(rootPath) {
       const relativePath = path.relative(root, fullPath);
       const segments = relativePath.split(path.sep);
       const extension = path.extname(entry.name).toLowerCase();
-      const sku = segments.length > 1 ? segments[0] : null;
-      if (!sku) {
-        unassigned.push({ path: fullPath, name: entry.name, reason: 'File is not inside a Seller SKU folder.' });
-        continue;
-      }
-      if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) files.push({ path: fullPath, relativePath, name: entry.name, sku, extension });
-      else if (MANUAL_VIDEO_EXTENSIONS.has(extension)) videos.push({ path: fullPath, relativePath, name: entry.name, sku, extension });
+      const sku = segments.length > 1 ? segments[0] : NO_SKU_GROUP;
+      if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) files.push({ path: fullPath, relativePath, name: entry.name, sku, extension, mediaType: 'image', tagWritable: true });
+      else if (VIDEO_EXTENSIONS.has(extension)) videos.push({
+        path: fullPath,
+        relativePath,
+        name: entry.name,
+        sku,
+        extension,
+        mediaType: 'video',
+        tagWritable: WRITABLE_VIDEO_EXTENSIONS.has(extension),
+      });
       else unsupported.push({ path: fullPath, relativePath, name: entry.name, sku, extension: extension || '(none)' });
     }
   }
-  return { root, files, videos, unsupported, unassigned };
+  return { root, files, videos, unsupported, unassigned, issues };
 }
 
 async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   const report = typeof onProgress === 'function' ? onProgress : () => {};
   report({ percent: 0, key: 'progress.findingMedia' });
   const inventory = await enumerateMedia(rootPath);
-  report({ percent: 10, key: 'progress.readingMetadata', variables: { total: inventory.files.length } });
-  const metadata = await exiftool.readMetadataBatch(
-    inventory.files.map((file) => file.path),
-    ({ completed, total }) => report({
-      percent: total ? 10 + Math.round((completed / total) * 20) : 30,
-      key: 'progress.readMetadata',
-      variables: { completed, total },
-    }),
-  );
+  const reviewable = [...inventory.files, ...inventory.videos];
+  const issues = [...inventory.issues];
+  const issuePaths = new Set(issues.map((issue) => normalizePath(issue.path)));
+  const addIssue = (file, error) => {
+    const key = normalizePath(file.path);
+    if (issuePaths.has(key)) return;
+    issuePaths.add(key);
+    issues.push({ path: file.path, name: file.name, sku: file.sku, reason: error.message });
+  };
+  report({ percent: 10, key: 'progress.readingMetadata', variables: { total: reviewable.length } });
+  let metadata;
+  try {
+    metadata = await exiftool.readMetadataBatch(
+      reviewable.map((file) => file.path),
+      ({ completed, total }) => report({
+        percent: total ? 10 + Math.round((completed / total) * 20) : 30,
+        key: 'progress.readMetadata',
+        variables: { completed, total },
+      }),
+    );
+  } catch {
+    let completed = 0;
+    metadata = (await mapLimit(reviewable, HASH_CONCURRENCY, async (file) => {
+      try {
+        return await exiftool.readMetadata(file.path);
+      } catch (error) {
+        addIssue(file, error);
+        return null;
+      } finally {
+        completed += 1;
+        report({
+          percent: reviewable.length ? 10 + Math.round((completed / reviewable.length) * 20) : 30,
+          key: 'progress.readMetadata',
+          variables: { completed, total: reviewable.length },
+        });
+      }
+    })).filter(Boolean);
+  }
   const metadataByPath = new Map(metadata.map((record) => [normalizePath(record.sourceFile), record]));
   let inspectedCount = 0;
-  const inspected = await mapLimit(inventory.files, HASH_CONCURRENCY, async (file) => {
-    const stats = await fsp.stat(file.path);
-    const [contentHash, visualHash] = await Promise.all([sha256File(file.path), perceptualHash(file.path)]);
-    const meta = metadataByPath.get(normalizePath(file.path)) || { subjects: [], hasTag: false, tagCount: 0 };
-    const decision = store.getDecision(contentHash);
-    const item = {
-      ...file,
-      size: stats.size,
-      modifiedAt: stats.mtime.toISOString(),
-      contentHash,
-      visualHash,
-      subjects: meta.subjects,
-      hasTag: meta.hasTag,
-      tagCount: meta.tagCount,
-      width: meta.width,
-      height: meta.height,
-      decision,
-      status: meta.hasTag ? 'tagged' : decision?.decision === 'no-tag' ? 'cleared' : 'review',
-    };
-    inspectedCount += 1;
-    report({
-      percent: inventory.files.length ? 30 + Math.round((inspectedCount / inventory.files.length) * 60) : 90,
-      key: 'progress.fingerprinting',
-      variables: { completed: inspectedCount, total: inventory.files.length },
-    });
-    return item;
+  const inspected = await mapLimit(reviewable, HASH_CONCURRENCY, async (file) => {
+    try {
+      const meta = metadataByPath.get(normalizePath(file.path));
+      if (!meta) throw new Error('Metadata could not be read for this file.');
+      const stats = await fsp.stat(file.path);
+      const [contentHash, visualHash] = await Promise.all([
+        sha256File(file.path),
+        file.mediaType === 'image' ? perceptualHash(file.path) : Promise.resolve(null),
+      ]);
+      const decision = store.getDecision(contentHash);
+      return {
+        ...file,
+        size: stats.size,
+        modifiedAt: stats.mtime.toISOString(),
+        contentHash,
+        visualHash,
+        subjects: meta.subjects,
+        hasTag: meta.hasTag,
+        tagCount: meta.tagCount,
+        width: meta.width,
+        height: meta.height,
+        decision,
+        classificationRecommendation: file.mediaType === 'image' ? store.getClassificationRecommendation(contentHash) : null,
+        status: meta.hasTag ? 'tagged' : decision?.decision === 'no-tag' ? 'cleared' : 'review',
+      };
+    } catch (error) {
+      addIssue(file, error);
+      return null;
+    } finally {
+      inspectedCount += 1;
+      report({
+        percent: reviewable.length ? 30 + Math.round((inspectedCount / reviewable.length) * 60) : 90,
+        key: 'progress.fingerprinting',
+        variables: { completed: inspectedCount, total: reviewable.length },
+      });
+    }
   });
+  const availableItems = inspected.filter(Boolean);
 
   report({ percent: 94, key: 'progress.grouping' });
   const exactGroups = new Map();
-  for (const item of inspected) {
+  for (const item of availableItems) {
     if (!exactGroups.has(item.contentHash)) exactGroups.set(item.contentHash, []);
     exactGroups.get(item.contentHash).push(item);
   }
@@ -172,9 +226,9 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
     }
   }
 
-  for (const item of inspected) item.visualVariantGroup = null;
+  for (const item of availableItems) item.visualVariantGroup = null;
   const bySku = Map.groupBy(
-    inspected.filter((item) => item.visualHash && !store.isVisualVariantDismissed(item.contentHash)),
+    availableItems.filter((item) => item.visualHash && !store.isVisualVariantDismissed(item.contentHash)),
     (item) => item.sku,
   );
   for (const skuItems of bySku.values()) {
@@ -197,7 +251,7 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   }
 
   const summaries = {};
-  for (const item of inspected) {
+  for (const item of availableItems) {
     const summary = summaries[item.sku] || { sku: item.sku, total: 0, review: 0, tagged: 0, cleared: 0, warnings: 0 };
     summary.total += 1;
     summary[item.status] += 1;
@@ -208,13 +262,14 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   const result = {
     root: inventory.root,
     scannedAt: new Date().toISOString(),
-    items: inspected,
+    items: availableItems,
     skuSummaries: Object.values(summaries).sort((first, second) => first.sku.localeCompare(second.sku)),
-    videos: inventory.videos,
+    videos: availableItems.filter((item) => item.mediaType === 'video'),
     unsupported: inventory.unsupported,
     unassigned: inventory.unassigned,
+    issues,
   };
-  report({ percent: 100, key: 'progress.scanComplete', variables: { total: inspected.length } });
+  report({ percent: 100, key: 'progress.scanComplete', variables: { total: availableItems.length } });
   return result;
 }
 

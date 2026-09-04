@@ -25,26 +25,42 @@ test('scan groups by first Seller SKU folder and remembers no-tag decisions by c
   const second = path.join(directory, 'SKU-TWO', 'second.jpg');
   const rootFile = path.join(directory, 'unassigned.jpg');
   const video = path.join(directory, 'SKU-ONE', 'demo.mp4');
+  const unsupportedVideoTag = path.join(directory, 'SKU-TWO', 'archive.mkv');
   await makeImage(first, '#225f48');
   await fs.mkdir(path.dirname(duplicate), { recursive: true });
   await fs.copyFile(first, duplicate);
   await makeImage(second, '#d59a2b', 140, 120);
   await makeImage(rootFile, '#444444');
   await fs.writeFile(video, 'manual-video-fixture');
+  await fs.writeFile(unsupportedVideoTag, 'manual-video-fixture');
 
   const store = new StateStore(path.join(directory, '.state', 'state.json'));
   await store.load();
   const contentHash = await sha256File(first);
   await store.setDecision(contentHash, 'no-tag', { reviewedBy: 'test' });
+  await store.setClassificationRecommendations([{
+    contentHash,
+    hasPerson: true,
+    faceCount: 1,
+    bodyCount: 1,
+    maxConfidence: 0.91,
+    detectorVersion: 'test-detector-v1',
+    analyzedAt: new Date().toISOString(),
+  }]);
 
   const progress = [];
   const result = await scanMediaLibrary(directory, exiftool, store, (update) => progress.push(update.percent));
-  assert.equal(result.items.length, 3);
-  assert.equal(result.videos.length, 1);
-  assert.equal(result.unassigned.length, 1);
+  assert.equal(result.items.length, 6);
+  assert.equal(result.videos.length, 2);
+  assert.equal(result.unassigned.length, 0);
   assert.equal(result.items.filter((item) => item.status === 'cleared').length, 2);
+  assert.equal(result.items.find((item) => item.path === rootFile).sku, '__NO_SKU__');
+  assert.equal(result.items.find((item) => item.path === video).mediaType, 'video');
+  assert.equal(result.items.find((item) => item.path === video).tagWritable, true);
+  assert.equal(result.items.find((item) => item.path === unsupportedVideoTag).tagWritable, false);
+  assert.equal(result.items.find((item) => item.path === first).classificationRecommendation.faceCount, 1);
   assert.equal(result.items.find((item) => item.path === first).exactDuplicateCount, 2);
-  assert.deepEqual(result.skuSummaries.map((summary) => summary.sku), ['SKU-ONE', 'SKU-TWO']);
+  assert.deepEqual(result.skuSummaries.map((summary) => summary.sku), ['__NO_SKU__', 'SKU-ONE', 'SKU-TWO']);
   assert.equal(progress[0], 0);
   assert.equal(progress.at(-1), 100);
   assert.equal(progress.every((value, index) => index === 0 || value >= progress[index - 1]), true);
@@ -85,4 +101,68 @@ test('human visual-match dismissal persists by content fingerprint and does not 
   const reloaded = new StateStore(path.join(directory, '.state', 'state.json'));
   await reloaded.load();
   assert.equal(reloaded.isVisualVariantDismissed(variantBefore.contentHash), true);
+});
+
+test('overlapping state writes preserve decisions, recommendations, and audit records', async (context) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'media-tagger-state-queue-'));
+  context.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const store = new StateStore(path.join(directory, 'state.json'));
+  await store.load();
+
+  await Promise.all([
+    store.setDecision('hash-a', 'no-tag', { reviewedBy: 'test' }),
+    store.setClassificationRecommendations([{
+      contentHash: 'hash-b',
+      hasPerson: true,
+      faceCount: 1,
+      bodyCount: 0,
+      maxConfidence: 0.8,
+      detectorVersion: 'test-v1',
+    }]),
+    store.audit('parallel-audit', { value: 1 }),
+  ]);
+
+  const reloaded = new StateStore(path.join(directory, 'state.json'));
+  await reloaded.load();
+  assert.equal(reloaded.getDecision('hash-a').decision, 'no-tag');
+  assert.equal(reloaded.getClassificationRecommendation('hash-b').faceCount, 1);
+  assert.equal(reloaded.state.audit.some((entry) => entry.action === 'parallel-audit'), true);
+  assert.equal(reloaded.state.audit.some((entry) => entry.action === 'classification-recommendations-recorded'), true);
+});
+
+test('legacy path-keyed backups and saved recommendations survive state upgrades', async (context) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'media-tagger-legacy-state-'));
+  context.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const stateFile = path.join(directory, 'state.json');
+  const sourcePath = path.join(directory, 'SKU-1', 'image.jpg');
+  const normalizedPath = sourcePath.toLocaleLowerCase('en-US');
+  const legacyBackup = {
+    sourcePath,
+    backupPath: path.join(directory, 'backups', 'image.before-tag'),
+    createdAt: '2026-01-01T00:00:00.000Z',
+    sourceHash: 'legacy-hash',
+  };
+  await fs.writeFile(stateFile, JSON.stringify({
+    version: 1,
+    settings: { lastRoot: null, backupRetentionDays: 30 },
+    decisions: {},
+    classificationRecommendations: {
+      'image-hash': { hasPerson: true, faceCount: 1, bodyCount: 0, maxConfidence: 0.8, detectorVersion: 'legacy-detector' },
+    },
+    visualVariantDismissals: {},
+    backups: { [normalizedPath]: legacyBackup },
+    audit: [],
+  }), 'utf8');
+
+  const store = new StateStore(stateFile);
+  await store.load();
+  assert.deepEqual(store.getBackup(normalizedPath, 'legacy-hash'), legacyBackup);
+  assert.equal(store.getClassificationRecommendation('image-hash').faceCount, 1);
+  await store.setDecision('new-hash', 'no-tag');
+
+  const reloaded = new StateStore(stateFile);
+  await reloaded.load();
+  assert.equal(reloaded.getBackup(normalizedPath, 'legacy-hash').sourceHash, 'legacy-hash');
+  assert.equal(reloaded.getClassificationRecommendation('image-hash').detectorVersion, 'legacy-detector');
+  assert.equal(reloaded.getDecision('new-hash').decision, 'no-tag');
 });

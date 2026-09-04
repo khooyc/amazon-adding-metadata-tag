@@ -35,10 +35,12 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   const css = fs.readFileSync(path.join(projectRoot, 'src', 'styles.css'), 'utf8');
   const renderer = fs.readFileSync(path.join(projectRoot, 'src', 'renderer.js'), 'utf8');
 
-  for (const id of ['language-select', 'theme-select', 'tutorial-open', 'tutorial-dialog', 'human-verification-warning', 'software-disclaimer-link', 'creator-link']) {
+  for (const id of ['language-select', 'theme-select', 'tutorial-open', 'tutorial-dialog', 'detect-people', 'count-people', 'update-indicator', 'update-label', 'human-verification-warning', 'software-disclaimer-link', 'creator-link']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.match(html, /<script src="i18n\.js"><\/script>/);
+  assert.match(html, /@vladmandic\/human\/dist\/human\.js/);
+  assert.match(html, /<script src="people-detector\.js"><\/script>/);
   assert.match(html, /<link rel="icon" type="image\/png" href="assets\/logo\.png">/);
   assert.match(html, /<img class="brand-mark" src="assets\/logo\.png" alt="">/);
   assert.match(css, /html\[data-theme="dark"\]/);
@@ -48,6 +50,9 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   assert.match(renderer, /api\.chooseFolder\(state\.locale\)/);
   assert.match(renderer, /api\.openSoftwareDisclaimer\(\)/);
   assert.match(renderer, /api\.openCreatorProfile\(\)/);
+  assert.match(renderer, /item\.mediaType === 'image'.*peopleDetector/s);
+  assert.match(renderer, /api\.checkForUpdate\(\)/);
+  assert.match(renderer, /api\.openUpdate\(state\.update\.releaseUrl\)/);
   assert.ok(fs.statSync(path.join(projectRoot, 'src', 'assets', 'logo.png')).size > 10_000);
   assert.ok(fs.statSync(path.join(projectRoot, 'build', 'icon.png')).size > 100_000);
 
@@ -57,6 +62,27 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   for (const match of html.matchAll(/data-i18n(?:-placeholder|-aria-label)?="([^"]+)"/g)) usedKeys.add(match[1]);
   const missing = [...usedKeys].filter((key) => !Object.hasOwn(i18n.translations.en, key));
   assert.deepEqual(missing, [], `missing English translations: ${missing.join(', ')}`);
+});
+
+test('Windows packaging produces a per-user one-click installer that launches after installation', () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+  assert.equal(packageJson.build.nsis.oneClick, true);
+  assert.equal(packageJson.build.nsis.perMachine, false);
+  assert.equal(packageJson.build.nsis.runAfterFinish, true);
+  assert.equal(packageJson.build.win.target.includes('nsis'), true);
+  assert.equal(packageJson.build.win.artifactName, 'Amazon-Adding-Metadata-Tag-Windows-Setup.${ext}');
+  assert.equal(packageJson.build.mac.artifactName, 'Amazon-Adding-Metadata-Tag-mac-${arch}.${ext}');
+});
+
+test('every XMP-mutating IPC route blocks video containers marked unsafe', () => {
+  const main = fs.readFileSync(path.join(projectRoot, 'electron', 'main.cjs'), 'utf8');
+  for (const channel of ['media:tag', 'media:remove-tags', 'media:normalize-tags']) {
+    const start = main.indexOf(`registerHandler('${channel}'`);
+    assert.notEqual(start, -1, `${channel} handler must exist`);
+    const next = main.indexOf("registerHandler('", start + 20);
+    const handler = main.slice(start, next === -1 ? undefined : next);
+    assert.match(handler, /assertTagWritableForCurrentScan\(root, paths\)/, `${channel} must guard unsafe video containers`);
+  }
 });
 
 test('software licence and disclaimer is complete and opens only through the secured Electron bridge', () => {
