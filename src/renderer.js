@@ -1,5 +1,6 @@
 const api = window.mediaTagger;
 const peopleDetector = window.peopleDetector;
+const classificationView = window.classificationView;
 const { normalizeLocale, supportedLocales, translate } = window.appI18n;
 
 const LANGUAGE_KEY = 'amazon-metadata-tag-language-v1';
@@ -270,9 +271,7 @@ function allItemsByPath() {
 }
 
 function currentRecommendation(item) {
-  if (item?.mediaType !== 'image') return null;
-  const recommendation = item?.classificationRecommendation;
-  return recommendation?.detectorVersion === peopleDetector.DETECTOR_VERSION ? recommendation : null;
+  return classificationView.currentRecommendation(item, peopleDetector.DETECTOR_VERSION);
 }
 
 function expandExactDuplicates(paths) {
@@ -319,6 +318,12 @@ function renderSummary(items) {
     `<span class="summary-pill"><strong>${items.length}</strong> ${t('summary.filesShown')}</span>`,
     `<span class="summary-pill"><strong>${unique}</strong> ${t('summary.uniqueContents')}</span>`,
   ];
+  if (state.view === 'tagged') {
+    const people = classificationView.taggedPeopleSummary(items, peopleDetector.DETECTOR_VERSION);
+    if (people.analyzedFiles) {
+      pills.push(`<span class="summary-pill"><strong>${people.peopleFiles}</strong> ${t('summary.peopleDetected')}</span>`);
+    }
+  }
   if (exactCopies) pills.push(`<span class="summary-pill"><strong>${exactCopies}</strong> ${t('summary.exactCopies')}</span>`);
   if (warnings) pills.push(`<span class="summary-pill"><strong>${warnings}</strong> ${t('summary.duplicateWarnings')}</span>`);
   elements['summary-cards'].innerHTML = pills.join('');
@@ -506,13 +511,8 @@ function applySavedRecommendations(recommendations) {
 
 async function analyzePeople() {
   if (!state.scan || state.busy) return;
-  const uniqueCandidates = new Map();
-  for (const item of state.scan.items) {
-    if (item.mediaType === 'image' && item.status === 'review' && !currentRecommendation(item) && !uniqueCandidates.has(item.contentHash)) {
-      uniqueCandidates.set(item.contentHash, item);
-    }
-  }
-  const candidates = [...uniqueCandidates.values()];
+  const startingView = state.view;
+  const candidates = classificationView.detectionCandidates(state.scan.items, startingView, peopleDetector.DETECTOR_VERSION);
   if (!candidates.length) return toast(t('toast.peopleAlreadyAnalyzed'));
 
   setBusy(true, 'busy.peopleTitle', 'busy.peopleLoading', { total: candidates.length });
@@ -547,7 +547,7 @@ async function analyzePeople() {
       const saved = await api.saveClassificationRecommendations(state.root, pending.splice(0));
       applySavedRecommendations(saved);
     }
-    state.view = 'people';
+    state.view = classificationView.viewAfterPeopleDetection(startingView);
     state.selected.clear();
     render();
     toast(t(failed ? 'toast.peopleCompleteWithFailures' : 'toast.peopleComplete', { people, total: candidates.length, failed }), failed ? 'error' : 'success');

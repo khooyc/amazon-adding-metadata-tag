@@ -58,7 +58,7 @@ A private, human-first Windows and macOS desktop app for preparing local Amazon 
 
 1. Choose any media folder. Seller SKU subfolders are optional; media placed directly in the selected folder remains reviewable.
 2. Open the app, choose that Media Library folder, and press **Scan**. No background monitoring occurs.
-3. Optionally press **Detect people**. Each unique untagged image is analyzed once on this computer, exact copies reuse the cached result, and likely matches appear under **People detected**.
+3. Optionally press **Detect people**. In **Needs review**, likely matches appear under **People detected**. In **Already tagged**, tagged images are audited in place and a compact count shows how many visible files have people detections. Each unique image is analyzed once on this computer and exact copies reuse the cached result.
 4. Review the untagged media. Click anywhere on a card to select or deselect it, then choose **Add tag & verify** or **No tag needed**. Watch every video fully before deciding. **Show in folder** never changes the selection.
 5. Upload the prepared files to Seller Central manually. The app does not log in to Amazon or claim an upload succeeded.
 
