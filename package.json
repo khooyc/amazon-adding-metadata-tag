@@ -14,6 +14,9 @@
   "scripts": {
     "start": "electron .",
     "test": "node --test test/*.test.cjs",
+    "web:build": "node scripts/build-web.cjs",
+    "web:dev": "node scripts/serve-web.cjs",
+    "extension:build": "npm run web:build && node scripts/build-extension.cjs",
     "dist": "npm run dist:win",
     "dist:win": "npm run test && electron-builder --win nsis --publish never",
     "dist:mac": "npm run test && electron-builder --mac dmg --publish never",

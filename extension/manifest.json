@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Amazon Metadata Tag — Local Review",
+  "short_name": "Metadata Tag",
+  "version": "1.6.3",
+  "description": "Independent local helper for people detection and verified XMP tagging of JPEG and PNG images.",
+  "minimum_chrome_version": "120",
+  "permissions": ["downloads"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Amazon Metadata Tag"
+  },
+  "icons": {
+    "16": "assets/icon-16.png",
+    "32": "assets/icon-32.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'none';"
+  }
+}

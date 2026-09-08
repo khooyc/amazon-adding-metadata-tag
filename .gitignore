@@ -1,5 +1,8 @@
 node_modules/
 dist/
+extension-dist/
+website-dist/
+.playwright-cli/
 tmp/
 *.log
 .listing-media-tagger/

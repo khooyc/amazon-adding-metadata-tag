@@ -24,6 +24,21 @@ For checksums, release notes, and previous versions, use the [official Releases 
 
 Open the `.dmg`, drag the app to **Applications**, then follow the [first-launch instructions](#first-launch-on-macos). No separate dependencies are required.
 
+### Chrome extension — prepared, not yet published
+
+The Chrome extension is built and tested, but it is not currently available in the Chrome Web Store. The publisher account has reached its present three-extension submission limit. Google does not publish a specific user, install, or review count that guarantees another slot; increase requests are evaluated using genuine sustained usage, extension quality, and publisher-account history.
+
+Public submission is therefore postponed while the existing extensions gain genuine users and engagement. When the publisher limit increases, upload `dist/Amazon-Metadata-Tag-Chrome-Extension-v1.6.3.zip` through the Chrome Web Store Developer Dashboard. Do not upload the complete project or `node_modules`.
+
+Until then, developers and testers can install it locally:
+
+1. Run `npm install`, then `npm run extension:build` from the project root.
+2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
+3. Choose **Load unpacked** and select the generated `extension-dist` folder.
+4. Pin the extension if desired, then click its toolbar icon to open the workspace.
+
+The extension processes JPEG and PNG files locally and requests only Chrome's `downloads` permission. It has no content scripts, host permissions, backend, analytics, or media-upload endpoint.
+
 ### How it works
 
 1. Choose the local folder containing your listing images and videos, then press **Scan**.

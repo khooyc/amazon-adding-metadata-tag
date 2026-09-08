@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#12221b">
+    <meta name="description" content="Detect people locally, add the Amazon synthetic performer XMP tag, verify it, and save processed image copies.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; worker-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <title>Amazon Metadata Tag — Web</title>
+    <link rel="icon" href="assets/logo.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Amazon Metadata Tag home">
+        <img src="assets/logo.png" alt="">
+        <span><strong>Amazon Metadata Tag</strong><small>Private browser edition</small></span>
+      </a>
+      <div class="top-actions">
+        <span class="local-chip"><i></i> Runs locally</span>
+        <button id="privacy-open" class="button ghost" type="button">Privacy &amp; limitations</button>
+        <button id="install-app" class="button secondary" type="button" hidden>Install app</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Find people, tag the right images, and download verified copies.</h1>
+        <p>We detect people in your images locally on this device. You decide whether they are AI-generated.</p>
+      </section>
+
+      <section id="drop-zone" class="drop-zone" aria-label="Drop JPEG or PNG images here">
+        <div class="drop-icon">＋</div>
+        <h2>Drop images here</h2>
+        <p>JPEG and PNG · Multiple files supported</p>
+        <button id="browse-files" class="button primary" type="button">Choose images</button>
+        <input id="file-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple hidden>
+      </section>
+
+      <section class="stats" aria-label="Image processing summary">
+        <div><strong id="count-images">0</strong><span>images</span></div>
+        <div><strong id="count-people">0</strong><span>people detected</span></div>
+        <div><strong id="count-selected">0</strong><span>selected</span></div>
+        <div><strong id="count-ready">0</strong><span>verified outputs</span></div>
+      </section>
+
+      <section id="actions" class="action-panel" hidden>
+        <div class="action-copy">
+          <p>Detection only finds people. You decide whether they are AI-generated and which images to tag, verify, and save.</p>
+        </div>
+        <div class="action-buttons">
+          <button id="detect-people" class="button secondary" type="button">Detect people locally</button>
+          <button id="select-people" class="button ghost" type="button">Select detected</button>
+          <button id="select-all" class="button ghost" type="button">Select all</button>
+          <button id="clear-selection" class="button ghost" type="button">Clear</button>
+        </div>
+        <div class="save-row">
+          <label>Save method
+            <select id="save-mode">
+              <option value="download">Download tagged copies</option>
+              <option value="folder">Choose output folder (Chrome/Edge)</option>
+            </select>
+          </label>
+          <button id="process-save" class="button primary" type="button">Tag, verify &amp; save selected</button>
+        </div>
+        <p class="save-note">Every output adds <code>-tagged</code>; existing names receive a number. Originals are never changed.</p>
+      </section>
+
+      <section id="progress-wrap" class="progress-wrap" hidden aria-live="polite">
+        <div class="progress-track"><div id="progress-fill"></div></div>
+        <span id="progress-label"></span>
+      </section>
+
+      <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+      <section id="gallery" class="gallery" aria-label="Selected images"></section>
+      <section id="empty-state" class="empty-state">
+        <div>✓</div>
+        <h2>Your images remain on this device</h2>
+        <p>The site does not need a server to inspect, detect, tag, or save your media.</p>
+      </section>
+    </main>
+
+    <footer>
+      <p>This tool assists review and may make mistakes. Confirm the latest applicable marketplace requirements before submitting files.</p>
+    </footer>
+
+    <dialog id="privacy-dialog">
+      <div class="dialog-content">
+        <p class="eyebrow">Privacy &amp; limitations</p>
+        <h2>Processing stays in your browser</h2>
+        <ul>
+          <li>Images are not uploaded by this website.</li>
+          <li>Face and body models are served with the site and run locally.</li>
+          <li>Only JPEG and PNG image metadata is supported in this first web version.</li>
+          <li>Person detection is a recommendation, not proof that a person is AI-generated.</li>
+          <li>Always inspect downloaded files before submitting them.</li>
+        </ul>
+        <button id="dialog-close" class="button primary" type="button">Understood</button>
+      </div>
+    </dialog>
+
+    <script src="vendor/human.js"></script>
+    <script src="people-detector.js"></script>
+    <script src="platform-adapter.js"></script>
+    <script type="module" src="app.mjs"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "Amazon Metadata Tag — Web",
+  "short_name": "Metadata Tag",
+  "description": "Private local people detection and verified XMP tagging for JPEG and PNG images.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0c1410",
+  "theme_color": "#12221b",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
