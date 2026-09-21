@@ -6,7 +6,7 @@ const test = require('node:test');
 const sharp = require('sharp');
 const { ExifToolClient, getExifToolPath } = require('../electron/core/exiftool.cjs');
 const { assertWithinRoot } = require('../electron/core/media-service.cjs');
-const { scanMediaLibrary, sha256File } = require('../electron/core/scanner.cjs');
+const { enumerateSelectedMedia, scanMediaLibrary, sha256File } = require('../electron/core/scanner.cjs');
 const { StateStore } = require('../electron/core/store.cjs');
 
 const workspace = path.resolve(__dirname, '..');
@@ -71,6 +71,26 @@ test('path guard rejects files outside the selected media folder', () => {
   assert.equal(assertWithinRoot(root, path.join(root, 'SKU-1', 'image.jpg')), path.join(root, 'SKU-1', 'image.jpg'));
   assert.throws(() => assertWithinRoot(root, path.resolve(os.tmpdir(), 'Elsewhere', 'image.jpg')), /outside/);
   assert.throws(() => assertWithinRoot(root, root), /outside/);
+});
+
+test('explicit media selection inventories only the chosen files', async (context) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'media-tagger-selection-'));
+  context.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const chosenImage = path.join(directory, 'SKU-ONE', 'main.jpg');
+  const unchosenImage = path.join(directory, 'SKU-ONE', 'not-chosen.jpg');
+  const chosenVideo = path.join(directory, 'SKU-TWO', 'demo.mp4');
+  const unsupported = path.join(directory, 'SKU-TWO', 'notes.txt');
+  await makeImage(chosenImage, '#225f48');
+  await makeImage(unchosenImage, '#d59a2b');
+  await fs.mkdir(path.dirname(chosenVideo), { recursive: true });
+  await fs.writeFile(chosenVideo, 'manual-video-fixture');
+  await fs.writeFile(unsupported, 'not media');
+
+  const inventory = await enumerateSelectedMedia([chosenImage, chosenImage, chosenVideo, unsupported], directory);
+  assert.deepEqual(inventory.files.map((file) => file.path), [chosenImage]);
+  assert.deepEqual(inventory.videos.map((file) => file.path), [chosenVideo]);
+  assert.deepEqual(inventory.unsupported.map((file) => file.path), [unsupported]);
+  assert.equal(inventory.files.some((file) => file.path === unchosenImage), false);
 });
 
 test('human visual-match dismissal persists by content fingerprint and does not hide exact duplicates', async (context) => {

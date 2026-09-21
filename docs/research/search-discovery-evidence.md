@@ -1,0 +1,47 @@
+# Organic discovery evidence for a browser utility and tutorial
+
+Checked: 14 September 2026. Scope: public, official documentation only. No project contents, accounts, private URLs, search performance, or analytics were inspected. These are implementation recommendations inferred from the sources, not a site audit, traffic forecast, or ranking guarantee.
+
+## Google Search and generative AI eligibility
+
+- A publicly accessible page needs unblocked Googlebot access, HTTP 200, and indexable content to meet Google's minimum technical requirements. Meeting them does not ensure indexing. Recommended application: provide useful visible text explaining the utility's purpose, supported inputs, steps, output, and limitations, with crawlable internal links. [Google technical requirements](https://developers.google.com/search/docs/essentials/technical)
+- Google's current AI optimization guide requires an indexed, snippet-eligible page and inclusion in Search generative AI features. It prioritizes useful original content and ordinary SEO. Google says `llms.txt`, special AI files, and special schema are unnecessary for its generative AI search; it ignores `llms.txt` for visibility and rankings. Recommended application: show a concrete worked example and a helpful demonstration, and avoid producing many near-identical pages solely to target query variations. Inclusion remains an eligibility condition, not a promise of crawling, indexing, citation, ranking, or traffic. [Current Google AI optimization guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide)
+- Search Console's **Settings > Search generative AI** control manages inclusion in AI Overviews, AI Mode, and generative AI features in Discover. Inclusion is the default; a child property can inherit a parent property's choice. Google says the control reached all websites worldwide on 31 August 2026. Recommended application: inspect the effective control, including inheritance, if pursuing public discovery; do not assume it requires a new opt-in. The setting does not govern AI training and does not serve as a ranking or inclusion signal for other parts of Search. [Search generative AI control](https://support.google.com/webmasters/answer/16908024)
+- The dedicated **Generative AI performance report (Search)** reports impressions for AI Overviews and AI Mode, with page, country, date, and device views. Its documentation states worldwide rollout on 31 August 2026; it also retains a rollout caveat and says insufficient impressions can prevent the report appearing. It excludes Search Labs experiments. The documented metric is impressions: do not describe this as a report of AI-specific clicks, conversions, or individual prompts. Discover has a separate report. [Generative AI performance report](https://support.google.com/webmasters/answer/16984139)
+
+Version caution: the older [AI features and your website](https://developers.google.com/search/docs/appearance/ai-features) page still describes the older eligibility/reporting arrangement. Use the current guide and the linked control/report documentation above for those details.
+
+## OpenAI search access versus training
+
+`OAI-SearchBot` supports discovery in ChatGPT search. `GPTBot` crawls material that may be used for foundation-model training. Their robots.txt settings are independent: allowing search can coexist with disallowing GPTBot. OpenAI recommends permitting OAI-SearchBot and its published IP ranges when search appearance is desired. A site that opts out of OAI-SearchBot will not appear in ChatGPT search answers, though it may still appear as a navigational link. `ChatGPT-User` performs user-triggered requests and is not the control for automatic search crawling or search eligibility. Recommended application: make an intentional access choice for the public site and check both robots.txt and hosting/firewall rules. Crawler access is not a recommendation or traffic guarantee. [Official OpenAI crawler documentation](https://developers.openai.com/api/docs/bots)
+
+## Bing Webmaster Tools and IndexNow
+
+Bing Webmaster Tools provides site verification, sitemap submission, URL inspection, crawl diagnostics, and search-performance reporting. Recommended application: once a public site is approved, verify ownership, submit a sitemap, and inspect the important URLs. These are discovery and diagnostic steps. [Bing's setup and feature guide](https://blogs.bing.com/webmaster/June-2025/Start-Using-Bing-Webmaster-Tools-to-Improve-Your-Site-Visibility)
+
+IndexNow notifies participating engines about new, meaningfully updated, or deleted URLs. Each engine decides whether and when to crawl and index them; submission does not guarantee indexing. Avoid repeatedly submitting unchanged URLs. Recommended application: notify on relevant publication or content changes, then verify actual indexing separately. Keep a sitemap as the inventory of public URLs. Do not equate an accepted submission with a ranking improvement or inclusion in an AI answer. [Official IndexNow FAQ](https://www.indexnow.org/faq), [Bing sitemap guidance](https://blogs.bing.com/webmaster/June-2025/Start-Using-Bing-Webmaster-Tools-to-Improve-Your-Site-Visibility)
+
+## Tutorial discovery on Google and YouTube
+
+Google video eligibility depends on more than an embed. A dedicated watch page must primarily serve watching one video; it needs indexing, a sufficiently performing watch page, a visible embedded video, and an accessible stable thumbnail. Google says indexing the page does not ensure indexing the video. A YouTube embed may be indexed both on its own watch page and on a qualifying website watch page. Recommended application: if website video discovery matters, make a tutorial page with the video prominent, a unique title/description, and supporting written steps. An incidental tutorial embed on the utility page does not by itself make that page a watch page. [Google video best practices](https://developers.google.com/search/docs/appearance/video)
+
+YouTube Search uses relevance, engagement, and quality; relevance includes how well the title, description, tags, and actual video match the query. Recommendations also depend on viewer history and satisfaction signals. Recommended application: demonstrate a concrete task clearly and make the title/thumbnail accurately promise that outcome; metadata alone cannot compel recommendations. [How YouTube works](https://support.google.com/youtube/answer/9962575?hl=en), [YouTube title and thumbnail guidance](https://support.google.com/youtube/answer/12340300?hl=en)
+
+YouTube explicitly places title, thumbnail, and description ahead of tags for discovery. Tags mainly help with commonly misspelled terms and otherwise have a minimal role. Prioritize the actual demonstration and clear presentation over tag expansion. [YouTube tags guidance](https://support.google.com/youtube/answer/146402?hl=en)
+
+## Structured data limits
+
+- Use truthful markup describing visible, relevant content. Google does not guarantee a rich result even when the Rich Results Test passes; automated validation cannot establish every quality requirement. Recommended application: validate applicable markup, then check rendered page content and actual eligibility. [General structured data policies](https://developers.google.com/search/docs/appearance/structured-data/sd-policies)
+- Google supports `WebApplication` under its software-app documentation. Software-app rich-result eligibility requires a name, offer price, and a rating or review; a free app uses price `0`. Do not invent ratings or reviews to fill required fields. A truthful application description with incomplete rich-result requirements should not be represented as rich-result eligible. [Software application documentation](https://developers.google.com/search/docs/appearance/structured-data/software-app)
+- Add `VideoObject` only for the actual embedded video and use its real metadata. Structured data supplements video requirements; it does not override watch-page or indexing requirements. [Video structured data](https://developers.google.com/search/docs/appearance/structured-data/video), [Google video best practices](https://developers.google.com/search/docs/appearance/video)
+- FAQ rich results stopped appearing in Google Search on **7 May 2026**, according to Google's current changelog; the former FAQ guide now redirects there. A useful visible FAQ can still help readers, but do not promise a Google FAQ rich result from its schema. [Google Search documentation updates](https://developers.google.com/search/updates)
+
+## Recommended order
+
+1. Make the public utility reliable, accessible to intended crawlers, and clearly explained with a worked example.
+2. Prepare an accurate, task-focused tutorial and a dedicated watch page if website video discovery is a goal.
+3. Inspect Google Search Console inclusion and indexing, and Bing indexing; submit a sitemap and meaningful IndexNow updates only after publication is approved.
+4. Add applicable truthful structured data and validate it without manufacturing missing evidence.
+5. Assess observed search impressions, actual visits and useful completions, and tutorial retention. Treat early data as evidence for iteration, not as proof of guaranteed future growth.
+
+This ordering is a practical synthesis of the documentation above. No accounts were connected, URLs submitted, access settings changed, content published, or people contacted during this research.

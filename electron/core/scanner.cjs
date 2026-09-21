@@ -129,10 +129,55 @@ async function enumerateMedia(rootPath) {
   return { root, files, videos, unsupported, unassigned, issues };
 }
 
-async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
+async function enumerateSelectedMedia(filePaths, rootPath) {
+  if (!Array.isArray(filePaths) || filePaths.length > 10_000 || filePaths.some((filePath) => typeof filePath !== 'string' || !path.isAbsolute(filePath))) {
+    throw new TypeError('filePaths must be an array of absolute file paths.');
+  }
+  const root = path.resolve(rootPath);
+  const inventory = { root, files: [], videos: [], unsupported: [], unassigned: [], issues: [] };
+  const seen = new Set();
+  for (const requestedPath of filePaths) {
+    const fullPath = path.resolve(requestedPath);
+    const normalized = normalizePath(fullPath);
+    if (seen.has(normalized)) continue;
+    seen.add(normalized);
+    const name = path.basename(fullPath);
+    const extension = path.extname(name).toLowerCase();
+    const relativePath = path.relative(root, fullPath);
+    const relativeSegments = relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath)
+      ? relativePath.split(path.sep)
+      : [name];
+    const sku = relativeSegments.length > 1 ? relativeSegments[0] : NO_SKU_GROUP;
+    let stats;
+    try {
+      stats = await fsp.stat(fullPath);
+      if (!stats.isFile()) throw new Error('The selected path is not a file.');
+    } catch (error) {
+      inventory.issues.push({ path: fullPath, relativePath, name, sku, reason: error.message });
+      continue;
+    }
+    if (SUPPORTED_IMAGE_EXTENSIONS.has(extension)) {
+      inventory.files.push({ path: fullPath, relativePath, name, sku, extension, mediaType: 'image', tagWritable: true });
+    } else if (VIDEO_EXTENSIONS.has(extension)) {
+      inventory.videos.push({
+        path: fullPath,
+        relativePath,
+        name,
+        sku,
+        extension,
+        mediaType: 'video',
+        tagWritable: WRITABLE_VIDEO_EXTENSIONS.has(extension),
+      });
+    } else {
+      inventory.unsupported.push({ path: fullPath, relativePath, name, sku, extension: extension || '(none)' });
+    }
+  }
+  return inventory;
+}
+
+async function scanInventory(inventory, exiftool, store, onProgress) {
   const report = typeof onProgress === 'function' ? onProgress : () => {};
   report({ percent: 0, key: 'progress.findingMedia' });
-  const inventory = await enumerateMedia(rootPath);
   const reviewable = [...inventory.files, ...inventory.videos];
   const issues = [...inventory.issues];
   const issuePaths = new Set(issues.map((issue) => normalizePath(issue.path)));
@@ -273,11 +318,21 @@ async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
   return result;
 }
 
+async function scanMediaLibrary(rootPath, exiftool, store, onProgress) {
+  return scanInventory(await enumerateMedia(rootPath), exiftool, store, onProgress);
+}
+
+async function scanMediaSelection(filePaths, rootPath, exiftool, store, onProgress) {
+  return scanInventory(await enumerateSelectedMedia(filePaths, rootPath), exiftool, store, onProgress);
+}
+
 module.exports = {
   enumerateMedia,
+  enumerateSelectedMedia,
   hammingDistanceHex,
   mapLimit,
   perceptualHash,
   scanMediaLibrary,
+  scanMediaSelection,
   sha256File,
 };

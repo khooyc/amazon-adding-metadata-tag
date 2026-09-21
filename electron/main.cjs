@@ -6,7 +6,7 @@ const sharp = require('sharp');
 const { APP_NAME, CREATOR_PROFILE_URL, DATA_DIRECTORY_NAME, normalizePath, SOFTWARE_DISCLAIMER_URL } = require('./core/constants.cjs');
 const { ExifToolClient, getExifToolPath } = require('./core/exiftool.cjs');
 const { MediaService, assertWithinRoot } = require('./core/media-service.cjs');
-const { scanMediaLibrary, sha256File } = require('./core/scanner.cjs');
+const { scanMediaLibrary, scanMediaSelection, sha256File } = require('./core/scanner.cjs');
 const { StateStore } = require('./core/store.cjs');
 const { checkLatestRelease, isTrustedReleaseUrl } = require('./core/update-service.cjs');
 
@@ -15,6 +15,7 @@ let store;
 let exiftool;
 let mediaService;
 let activeRoot = null;
+let activeSelection = null;
 let lastScan = null;
 let activeMutation = null;
 let quitAfterMutation = false;
@@ -47,6 +48,19 @@ protocol.registerSchemesAsPrivileged([{
 function isWithinDirectory(directory, target) {
   const relative = path.relative(directory, target);
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function commonDirectory(filePaths) {
+  const paths = filePaths.map((filePath) => path.resolve(filePath));
+  let candidate = path.dirname(paths[0]);
+  for (const target of paths.slice(1)) {
+    while (!isWithinDirectory(candidate, target)) {
+      const parent = path.dirname(candidate);
+      if (parent === candidate) break;
+      candidate = parent;
+    }
+  }
+  return candidate;
 }
 
 function registerAppProtocol() {
@@ -294,15 +308,38 @@ function setupIpc() {
     });
     if (result.canceled || !result.filePaths[0]) return null;
     activeRoot = path.resolve(result.filePaths[0]);
+    activeSelection = null;
     lastScan = null;
     thumbnailCache.clear();
     await store.setSetting('lastRoot', activeRoot);
     return activeRoot;
   });
 
+  registerHandler('files:choose', async ({ locale }) => {
+    const titles = {
+      'zh-CN': '选择要审核的媒体文件',
+      'zh-TW': '選擇要審核的媒體檔案',
+      en: 'Choose media files to review',
+    };
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: titles[locale] || titles.en,
+      properties: ['openFile', 'multiSelections', 'dontAddToRecent'],
+      filters: [{ name: 'Listing media', extensions: ['jpg', 'jpeg', 'png', 'tif', 'tiff', 'webp', 'mp4', 'mov', 'm4v', 'qt', '3gp', '3g2', 'f4v', 'lrv', 'mqv', 'mkv', 'webm', 'avi', 'wmv', 'mpeg', 'mpg'] }],
+    });
+    if (result.canceled || !result.filePaths.length) return null;
+    activeSelection = [...new Set(result.filePaths.map((filePath) => path.resolve(filePath)))];
+    activeRoot = commonDirectory(activeSelection);
+    lastScan = null;
+    thumbnailCache.clear();
+    await store.setSetting('lastRoot', activeRoot);
+    return { root: activeRoot, count: activeSelection.length };
+  });
+
   registerHandler('scan:run', async ({ rootPath }) => {
     const root = requireActiveRoot(rootPath);
-    lastScan = await scanMediaLibrary(root, exiftool, store, progressReporter('scan'));
+    lastScan = activeSelection
+      ? await scanMediaSelection(activeSelection, root, exiftool, store, progressReporter('scan'))
+      : await scanMediaLibrary(root, exiftool, store, progressReporter('scan'));
     await store.audit('folder-scanned', {
       root,
       imageCount: lastScan.items.filter((item) => item.mediaType === 'image').length,

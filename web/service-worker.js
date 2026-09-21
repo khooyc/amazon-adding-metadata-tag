@@ -1,7 +1,11 @@
-const CACHE = 'amazon-metadata-tag-web-v4';
+const CACHE = 'amazon-metadata-tag-web-v10';
 const ASSETS = [
   './', './index.html', './styles.css', './app.mjs', './xmp.mjs', './people-detector.js', './platform-adapter.js',
-  './manifest.webmanifest', './assets/logo.png', './assets/icon-192.png', './assets/icon-512.png', './vendor/human.js',
+  './manifest.webmanifest', './assets/logo.png', './assets/icon-192.png', './assets/icon-512.png',
+  './assets/hero-seller-review.png', './assets/tutorial-video-placeholder.png',
+  './assets/fonts/bricolage-grotesque-latin.woff2', './assets/fonts/hanken-grotesk-latin.woff2',
+  './assets/fonts/space-mono-regular-latin.woff2', './assets/fonts/space-mono-bold-latin.woff2',
+  './vendor/human.js',
   './models/blazeface.json', './models/blazeface.bin',
   './models/movenet-lightning.json', './models/movenet-lightning.bin',
 ];

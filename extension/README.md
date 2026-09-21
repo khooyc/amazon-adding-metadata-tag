@@ -12,7 +12,7 @@ This Manifest V3 extension runs locally and requests only the `downloads` permis
 
 ## Chrome Web Store publication status
 
-The version 1.6.3 store package is ready at `dist/Amazon-Metadata-Tag-Chrome-Extension-v1.6.3.zip`, but public submission is postponed. The publisher account has reached its current three-extension limit. Google does not publish a guaranteed engagement threshold for increasing that limit; it evaluates genuine sustained usage of existing extensions, extension quality, and publisher-account tenure and activity.
+The version 1.6.4 store package is ready at `dist/Amazon-Metadata-Tag-Chrome-Extension-v1.6.4.zip`, but public submission is postponed. The publisher account has reached its current three-extension limit. Google does not publish a guaranteed engagement threshold for increasing that limit; it evaluates genuine sustained usage of existing extensions, extension quality, and publisher-account tenure and activity.
 
 After the existing extensions gain genuine users and the publisher limit is increased, upload the ZIP through the Chrome Web Store Developer Dashboard. Do not upload the complete project or `node_modules`. The dashboard may allow the item to be saved as a draft before another submission slot becomes available, but it cannot be submitted for review while the limit is reached.
 

@@ -19,6 +19,17 @@ function minimalPng() {
   ]);
 }
 
+function isoBox(type, payload = []) {
+  return Uint8Array.from([...be32(payload.length + 8), ...Buffer.from(type), ...payload]);
+}
+
+function minimalMp4() {
+  return Uint8Array.from([
+    ...isoBox('ftyp', [...Buffer.from('isom'), 0, 0, 0, 0, ...Buffer.from('isommp42')]),
+    ...isoBox('free'),
+  ]);
+}
+
 test('browser XMP module writes and verifies an exact JPEG dc:subject tag', async () => {
   const { TAG_VALUE, inspectImage, tagAndVerifyImage } = await import('../web/xmp.mjs');
   const source = Uint8Array.from([0xff, 0xd8, 0xff, 0xd9]);
@@ -66,4 +77,33 @@ test('extended JPEG XMP is refused rather than partially rewritten', async () =>
 test('unsupported images fail without producing output', async () => {
   const { tagAndVerifyImage } = await import('../web/xmp.mjs');
   assert.throws(() => tagAndVerifyImage(Uint8Array.from([1, 2, 3]), 'sample.webp'), /not a supported JPEG or PNG/);
+});
+
+test('browser XMP module writes and verifies an exact MP4 dc:subject tag', async () => {
+  const { TAG_VALUE, inspectVideo, tagAndVerifyVideo } = await import('../web/xmp.mjs');
+  const source = minimalMp4();
+  const result = tagAndVerifyVideo(source, 'sample.mp4');
+  assert.equal(result.changed, true);
+  assert.equal(inspectVideo(result.bytes, 'sample.mp4').hasTag, true);
+  assert.deepEqual(result.after.subjects, [TAG_VALUE]);
+  assert.deepEqual([...result.bytes.slice(0, source.length)], [...source]);
+});
+
+test('video tagging is idempotent and updates its XMP UUID box without growing again', async () => {
+  const { tagAndVerifyVideo } = await import('../web/xmp.mjs');
+  const once = tagAndVerifyVideo(minimalMp4(), 'sample.mov');
+  const twice = tagAndVerifyVideo(once.bytes, 'sample.mov');
+  assert.equal(twice.changed, false);
+  assert.equal(twice.bytes.length, once.bytes.length);
+});
+
+test('invalid video containers fail without producing output', async () => {
+  const { tagAndVerifyVideo } = await import('../web/xmp.mjs');
+  assert.throws(() => tagAndVerifyVideo(Uint8Array.from([1, 2, 3]), 'sample.mp4'), /supported MP4, MOV, or M4V|truncated/);
+});
+
+test('open-ended final video boxes are refused instead of hiding appended metadata inside media data', async () => {
+  const { tagAndVerifyVideo } = await import('../web/xmp.mjs');
+  const source = Uint8Array.from([...minimalMp4(), ...[0, 0, 0, 0], ...Buffer.from('mdat'), 1, 2, 3, 4]);
+  assert.throws(() => tagAndVerifyVideo(source, 'sample.mp4'), /open-ended final box/);
 });

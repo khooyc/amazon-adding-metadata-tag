@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Amazon Metadata Tag — Local Review",
   "short_name": "Metadata Tag",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Independent local helper for people detection and verified XMP tagging of JPEG and PNG images.",
   "minimum_chrome_version": "120",
   "permissions": ["downloads"],

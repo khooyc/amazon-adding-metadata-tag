@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#12221b">
-    <meta name="description" content="Detect people locally, add the Amazon synthetic performer XMP tag, verify it, and save processed image copies.">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; worker-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
-    <title>Amazon Metadata Tag — Web</title>
+    <meta name="description" content="Review images and videos locally, add the Amazon synthetic performer XMP tag, verify it, and save processed copies.">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Free Amazon AI Metadata Tag Tool | Browser &amp; Desktop">
+    <meta property="og:description" content="Review listing media locally, add the exact contains-synthetic-performer XMP keyword when it applies, and save verified copies.">
+    <meta property="og:image" content="assets/hero-seller-review.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free Amazon AI Metadata Tag Tool | Browser &amp; Desktop">
+    <meta name="twitter:description" content="Review listing media locally, add the exact contains-synthetic-performer XMP keyword when it applies, and save verified copies.">
+    <meta name="twitter:image" content="assets/hero-seller-review.png">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; worker-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+    <title>Free Amazon AI Metadata Tag Tool | Browser &amp; Desktop</title>
     <link rel="icon" href="assets/logo.png">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="styles.css">
@@ -20,39 +29,57 @@
       <div class="top-actions">
         <span class="local-chip"><i></i> Runs locally</span>
         <button id="privacy-open" class="button ghost" type="button">Privacy &amp; limitations</button>
-        <button id="install-app" class="button secondary" type="button" hidden>Install app</button>
+        <button id="install-app" class="button secondary" type="button" aria-haspopup="dialog" aria-controls="desktop-dialog">Download desktop app</button>
       </div>
     </header>
 
     <main>
-      <section class="hero">
-        <h1>Find people, tag the right images, and download verified copies.</h1>
-        <p>We detect people in your images locally on this device. You decide whether they are AI-generated.</p>
+      <section id="drop-zone" class="drop-zone" aria-labelledby="drop-title">
+        <div class="drop-icon" aria-hidden="true">＋</div>
+        <div class="drop-copy">
+          <p class="eyebrow">Start here</p>
+          <h2 id="drop-title">Choose files or a folder</h2>
+          <p>Pick individual images/videos for a quick batch, or choose a folder to add its media. You can also drag and drop.</p>
+        </div>
+        <div class="drop-actions">
+          <button id="browse-files" class="button primary" type="button">Choose files</button>
+          <button id="browse-folder" class="button ghost" type="button">Choose folder</button>
+        </div>
+        <input id="file-input" type="file" accept="image/jpeg,image/png,video/mp4,video/quicktime,.jpg,.jpeg,.png,.mp4,.mov,.m4v" multiple hidden>
+        <input id="folder-input" type="file" accept="image/jpeg,image/png,video/mp4,video/quicktime,.jpg,.jpeg,.png,.mp4,.mov,.m4v" webkitdirectory directory multiple hidden>
       </section>
 
-      <section id="drop-zone" class="drop-zone" aria-label="Drop JPEG or PNG images here">
-        <div class="drop-icon">＋</div>
-        <h2>Drop images here</h2>
-        <p>JPEG and PNG · Multiple files supported</p>
-        <button id="browse-files" class="button primary" type="button">Choose images</button>
-        <input id="file-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple hidden>
+      <section class="hero hero-shell">
+        <div class="hero-copy">
+          <p class="eyebrow">Amazon seller media workflow</p>
+          <h1>Add the Amazon AI disclosure tag to your listing media.</h1>
+          <p>Review images and supported videos locally, add <code>contains-synthetic-performer</code> when it applies, and save a verified copy. Your files stay on this device.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#drop-zone">Choose media</a>
+            <a class="button ghost" href="#tutorial">See how it works</a>
+          </div>
+        </div>
+        <figure class="hero-art">
+          <img src="assets/hero-seller-review.png" alt="Seller reviewing product images and a video on a laptop">
+          <figcaption><span class="hero-status-dot"></span> Processing stays local</figcaption>
+        </figure>
       </section>
 
-      <section class="stats" aria-label="Image processing summary">
-        <div><strong id="count-images">0</strong><span>images</span></div>
-        <div><strong id="count-people">0</strong><span>people detected</span></div>
+      <section class="stats" aria-label="Media processing summary">
+        <div><strong id="count-images">0</strong><span>media files</span></div>
+        <div><strong id="count-people">0</strong><span>images with people</span></div>
         <div><strong id="count-selected">0</strong><span>selected</span></div>
         <div><strong id="count-ready">0</strong><span>verified outputs</span></div>
       </section>
 
       <section id="actions" class="action-panel" hidden>
         <div class="action-copy">
-          <p>Detection only finds people. You decide whether they are AI-generated and which images to tag, verify, and save.</p>
+          <p>Detection is available for images. Videos must be watched in full before they can be selected. You make every tagging decision.</p>
         </div>
         <div class="action-buttons">
-          <button id="detect-people" class="button secondary" type="button">Detect people locally</button>
+          <button id="detect-people" class="button secondary" type="button">Detect people in images</button>
           <button id="select-people" class="button ghost" type="button">Select detected</button>
-          <button id="select-all" class="button ghost" type="button">Select all</button>
+          <button id="select-all" class="button ghost" type="button">Select review-ready</button>
           <button id="clear-selection" class="button ghost" type="button">Clear</button>
         </div>
         <div class="save-row">
@@ -73,11 +100,40 @@
       </section>
 
       <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
-      <section id="gallery" class="gallery" aria-label="Selected images"></section>
+      <section id="gallery" class="gallery" aria-label="Selected media"></section>
       <section id="empty-state" class="empty-state">
         <div>✓</div>
-        <h2>Your images remain on this device</h2>
+        <h2>Your media remains on this device</h2>
         <p>The site does not need a server to inspect, detect, tag, or save your media.</p>
+      </section>
+
+      <section id="tutorial" class="tutorial-card" aria-labelledby="tutorial-title">
+        <div class="tutorial-copy">
+          <p class="eyebrow">Free walkthrough</p>
+          <h2 id="tutorial-title">See the browser and desktop workflow.</h2>
+          <p>The tutorial video is being edited. It will show when to use the tag, how to review media, and how to verify the saved copy before uploading to Seller Central.</p>
+          <p class="tutorial-note"><span class="coming-dot"></span> Video coming soon</p>
+        </div>
+        <div class="tutorial-frame" aria-label="Tutorial video placeholder">
+          <img src="assets/tutorial-video-placeholder.png" alt="Laptop showing a product media review workspace">
+          <div class="tutorial-overlay">
+            <span class="play-placeholder" aria-hidden="true">▶</span>
+            <span>Video placeholder</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="answer-grid" aria-label="About this tool">
+        <article>
+          <p class="eyebrow">What it does</p>
+          <h2>One clear metadata step before your upload.</h2>
+          <p>This tool adds the exact keyword <code>contains-synthetic-performer</code> to the XMP <code>dc:subject</code> field in a new copy. Always review whether the tag applies to your media.</p>
+        </article>
+        <article>
+          <p class="eyebrow">Choose your edition</p>
+          <h2>Browser for a quick batch. Desktop for a library.</h2>
+          <p>The browser edition is private and local. Use <button class="inline-link" type="button" data-open-desktop>Download desktop app</button> for larger folders and the full desktop review workflow.</p>
+        </article>
       </section>
     </main>
 
@@ -85,14 +141,36 @@
       <p>This tool assists review and may make mistakes. Confirm the latest applicable marketplace requirements before submitting files.</p>
     </footer>
 
+    <dialog id="desktop-dialog" aria-labelledby="desktop-title" aria-describedby="desktop-description">
+      <div class="dialog-content">
+        <p class="eyebrow">Desktop edition</p>
+        <h2 id="desktop-title">Download for your computer</h2>
+        <p id="desktop-description" class="desktop-description">Choose your version, then open the downloaded installer to install the desktop app.</p>
+        <div class="desktop-downloads">
+          <a class="button primary desktop-download" href="https://github.com/khooyc/amazon-adding-metadata-tag/releases/latest/download/Amazon-Adding-Metadata-Tag-Windows-Setup.exe" target="_blank" rel="noopener noreferrer">
+            <strong>Windows</strong><span>Download installer (.exe)</span>
+          </a>
+          <a class="button ghost desktop-download" href="https://github.com/khooyc/amazon-adding-metadata-tag/releases/latest/download/Amazon-Adding-Metadata-Tag-mac-arm64.dmg" target="_blank" rel="noopener noreferrer">
+            <strong>Mac · Apple silicon</strong><span>M1 or newer · Download .dmg</span>
+          </a>
+          <a class="button ghost desktop-download" href="https://github.com/khooyc/amazon-adding-metadata-tag/releases/latest/download/Amazon-Adding-Metadata-Tag-mac-x64.dmg" target="_blank" rel="noopener noreferrer">
+            <strong>Mac · Intel</strong><span>Intel processor · Download .dmg</span>
+          </a>
+        </div>
+        <p class="desktop-help">On a Mac, check Apple menu → About This Mac to find your chip or processor.</p>
+        <a class="desktop-release-link" href="https://github.com/khooyc/amazon-adding-metadata-tag/releases/latest" target="_blank" rel="noopener noreferrer">Release notes and all downloads</a>
+        <form method="dialog"><button class="button secondary" type="submit">Back to browser tool</button></form>
+      </div>
+    </dialog>
+
     <dialog id="privacy-dialog">
       <div class="dialog-content">
         <p class="eyebrow">Privacy &amp; limitations</p>
         <h2>Processing stays in your browser</h2>
         <ul>
-          <li>Images are not uploaded by this website.</li>
-          <li>Face and body models are served with the site and run locally.</li>
-          <li>Only JPEG and PNG image metadata is supported in this first web version.</li>
+          <li>Images and videos are not uploaded by this website.</li>
+          <li>Face and body models are served with the site and run locally on images only.</li>
+          <li>JPEG, PNG, MP4, MOV, and M4V metadata is supported. Videos must be watched in full before selection.</li>
           <li>Person detection is a recommendation, not proof that a person is AI-generated.</li>
           <li>Always inspect downloaded files before submitting them.</li>
         </ul>

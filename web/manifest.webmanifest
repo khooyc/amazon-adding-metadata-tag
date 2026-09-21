@@ -1,7 +1,7 @@
 {
   "name": "Amazon Metadata Tag — Web",
   "short_name": "Metadata Tag",
-  "description": "Private local people detection and verified XMP tagging for JPEG and PNG images.",
+  "description": "Private local review and verified XMP tagging for Amazon listing images and supported videos.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

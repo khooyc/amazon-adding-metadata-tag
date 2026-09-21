@@ -4,6 +4,14 @@
 
 Created by [khooyc](https://github.com/khooyc) on GitHub.
 
+## Latest update — v1.6.4
+
+People detection now rejects malformed body-pose placeholders with no usable body box and too few confident keypoints. This fixes the reported weighted-vest example: the product-only image is no longer marked as containing a person, while the matching image with the smaller model is still detected through its face and valid body pose.
+
+The detector version was changed so recommendations cached by an earlier release are analyzed again. Detection remains advisory: always review the actual image before deciding whether the synthetic-performer tag is required.
+
+This release also adds explicit file selection in the desktop app, browser-side review and XMP tagging for supported video files, a full-watch requirement before selecting videos, clearer installation links, self-hosted interface fonts, and website discovery/accessibility improvements. All processing remains local.
+
 ## Download and install
 
 ### Windows — recommended
@@ -28,14 +36,16 @@ Open the `.dmg`, drag the app to **Applications**, then follow the [first-launch
 
 The Chrome extension is built and tested, but it is not currently available in the Chrome Web Store. The publisher account has reached its present three-extension submission limit. Google does not publish a specific user, install, or review count that guarantees another slot; increase requests are evaluated using genuine sustained usage, extension quality, and publisher-account history.
 
-Public submission is therefore postponed while the existing extensions gain genuine users and engagement. When the publisher limit increases, upload `dist/Amazon-Metadata-Tag-Chrome-Extension-v1.6.3.zip` through the Chrome Web Store Developer Dashboard. Do not upload the complete project or `node_modules`.
+Public submission is therefore postponed while the existing extensions gain genuine users and engagement. When the publisher limit increases, upload `dist/Amazon-Metadata-Tag-Chrome-Extension-v1.6.4.zip` through the Chrome Web Store Developer Dashboard. Do not upload the complete project or `node_modules`.
 
-Until then, developers and testers can install it locally:
+Until then, developers and testers can install the packaged extension locally:
 
-1. Run `npm install`, then `npm run extension:build` from the project root.
+1. Download `Amazon-Metadata-Tag-Chrome-Extension-v1.6.4.zip` from the [latest GitHub release](https://github.com/khooyc/amazon-adding-metadata-tag/releases/latest) and extract it to a permanent folder.
 2. Open `chrome://extensions` in Chrome and enable **Developer mode**.
-3. Choose **Load unpacked** and select the generated `extension-dist` folder.
+3. Choose **Load unpacked** and select the extracted folder containing `manifest.json`.
 4. Pin the extension if desired, then click its toolbar icon to open the workspace.
+
+Developers can instead run `npm install` followed by `npm run extension:build`, then load the generated `extension-dist` folder.
 
 The extension processes JPEG and PNG files locally and requests only Chrome's `downloads` permission. It has no content scripts, host permissions, backend, analytics, or media-upload endpoint.
 

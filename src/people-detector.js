@@ -1,14 +1,27 @@
 (() => {
-  const DETECTOR_VERSION = 'human-3.3.6-face-body-v2';
+  const DETECTOR_VERSION = 'human-3.3.6-face-body-v3';
   const FACE_CONFIDENCE_THRESHOLD = 0.45;
   const BODY_CONFIDENCE_THRESHOLD = 0.25;
+  const BODY_MIN_CONFIDENT_KEYPOINTS = 4;
+  const BODY_MIN_BOX_SIZE = 8;
   let detectorPromise = null;
+
+  function isUsableBodyPose(item) {
+    if (Number(item?.score) < BODY_CONFIDENCE_THRESHOLD) return false;
+    const width = Number(item?.box?.[2]);
+    const height = Number(item?.box?.[3]);
+    if (!Number.isFinite(width) || !Number.isFinite(height)) return false;
+    if (width < BODY_MIN_BOX_SIZE || height < BODY_MIN_BOX_SIZE) return false;
+    const confidentKeypoints = (Array.isArray(item?.keypoints) ? item.keypoints : [])
+      .filter((point) => Number(point?.score) >= BODY_CONFIDENCE_THRESHOLD);
+    return confidentKeypoints.length >= BODY_MIN_CONFIDENT_KEYPOINTS;
+  }
 
   function normalizeResult(result) {
     const faces = (Array.isArray(result?.face) ? result.face : [])
       .filter((item) => Number(item?.score) >= FACE_CONFIDENCE_THRESHOLD);
     const bodies = (Array.isArray(result?.body) ? result.body : [])
-      .filter((item) => Number(item?.score) >= BODY_CONFIDENCE_THRESHOLD);
+      .filter(isUsableBodyPose);
     const scores = [...faces, ...bodies]
       .map((item) => Number(item?.score) || 0)
       .filter((score) => score >= 0 && score <= 1);

@@ -40,7 +40,7 @@ const state = {
 };
 
 const elements = Object.fromEntries([
-  'choose-folder', 'scan-folder', 'detect-people', 'folder-strip', 'folder-path', 'welcome', 'welcome-choose', 'library',
+  'choose-files', 'choose-folder', 'scan-folder', 'detect-people', 'folder-strip', 'folder-path', 'welcome', 'welcome-choose-files', 'welcome-choose', 'library',
   'sku-list', 'all-skus', 'search', 'select-visible', 'select-all-media', 'selection-bar', 'selected-label', 'selection-note',
   'review-actions', 'tagged-actions', 'duplicate-actions', 'mark-no-tag', 'add-tag', 'normalize-tag',
   'remove-tag', 'not-duplicate', 'trash-files', 'summary-cards', 'gallery', 'empty-view', 'view-eyebrow', 'view-title',
@@ -496,6 +496,27 @@ async function chooseFolder() {
     elements.welcome.classList.remove('hidden');
     elements.library.classList.add('hidden');
     toast(t('toast.folderSelected'));
+    await scan();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+async function chooseFiles() {
+  if (state.busy) return;
+  try {
+    const chosen = await api.chooseFiles(state.locale);
+    if (!chosen) return;
+    state.root = chosen.root;
+    state.scan = null;
+    state.selected.clear();
+    elements['folder-path'].textContent = t('folder.filesSelected', { count: chosen.count, path: chosen.root });
+    elements['folder-strip'].classList.add('active');
+    elements['scan-folder'].disabled = false;
+    elements.welcome.classList.remove('hidden');
+    elements.library.classList.add('hidden');
+    toast(t('toast.filesSelected', { count: chosen.count }));
+    await scan();
   } catch (error) {
     toast(error.message, 'error');
   }
@@ -716,7 +737,9 @@ async function handleUpdateIndicator() {
   }
 }
 
+elements['choose-files'].addEventListener('click', chooseFiles);
 elements['choose-folder'].addEventListener('click', chooseFolder);
+elements['welcome-choose-files'].addEventListener('click', chooseFiles);
 elements['welcome-choose'].addEventListener('click', chooseFolder);
 elements['scan-folder'].addEventListener('click', scan);
 elements['detect-people'].addEventListener('click', analyzePeople);

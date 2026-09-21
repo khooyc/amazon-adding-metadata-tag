@@ -35,7 +35,7 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   const css = fs.readFileSync(path.join(projectRoot, 'src', 'styles.css'), 'utf8');
   const renderer = fs.readFileSync(path.join(projectRoot, 'src', 'renderer.js'), 'utf8');
 
-  for (const id of ['language-select', 'theme-select', 'tutorial-open', 'tutorial-dialog', 'detect-people', 'count-people', 'update-indicator', 'update-label', 'human-verification-warning', 'software-disclaimer-link', 'creator-link']) {
+  for (const id of ['language-select', 'theme-select', 'tutorial-open', 'tutorial-dialog', 'detect-people', 'count-people', 'update-indicator', 'update-label', 'human-verification-warning', 'software-disclaimer-link', 'creator-link', 'choose-files', 'choose-folder', 'welcome-choose-files', 'welcome-choose']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
   assert.match(html, /<script src="i18n\.js"><\/script>/);
@@ -44,10 +44,15 @@ test('localized settings, dark mode, tutorial, and persistent legal warning are 
   assert.match(html, /<link rel="icon" type="image\/png" href="assets\/logo\.png">/);
   assert.match(html, /<img class="brand-mark" src="assets\/logo\.png" alt="">/);
   assert.match(css, /html\[data-theme="dark"\]/);
+  assert.match(css, /--font-display:\s*'Bricolage Grotesque'/);
+  assert.match(css, /--font-body:\s*'Hanken Grotesk'/);
+  assert.match(css, /--font-mono:\s*'Space Mono'/);
+  assert.match(css, /\.source-choices/);
   assert.match(css, /html\[data-theme="dark"\] \.button-secondary \{[^}]*background: #fff;[^}]*color: #17221c;/);
   assert.match(renderer, /TUTORIAL_SEEN_KEY/);
   assert.match(renderer, /prefers-color-scheme: dark/);
   assert.match(renderer, /api\.chooseFolder\(state\.locale\)/);
+  assert.match(renderer, /api\.chooseFiles\(state\.locale\)/);
   assert.match(renderer, /api\.openSoftwareDisclaimer\(\)/);
   assert.match(renderer, /api\.openCreatorProfile\(\)/);
   assert.match(renderer, /item\.mediaType === 'image'.*peopleDetector/s);

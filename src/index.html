@@ -23,7 +23,8 @@
             <span class="update-dot" aria-hidden="true"></span>
             <span id="update-label" data-i18n="update.checking">Checking for updates...</span>
           </button>
-          <button id="choose-folder" class="button button-secondary" data-i18n="button.chooseFolder">Choose media folder</button>
+          <button id="choose-files" class="button button-secondary" data-i18n="button.chooseFiles">Choose files</button>
+          <button id="choose-folder" class="button button-secondary" data-i18n="button.chooseFolder">Choose folder</button>
           <button id="scan-folder" class="button button-primary" data-i18n="button.scan" disabled>Scan</button>
         </div>
       </header>
@@ -85,9 +86,18 @@
           <div id="welcome" class="welcome">
             <div class="welcome-icon">✓</div>
             <p class="eyebrow" data-i18n="welcome.eyebrow">Human-first review</p>
-            <h2 data-i18n="welcome.title">Verify every local image before Amazon upload</h2>
-            <p data-i18n="welcome.body">Select a folder organized as Media Library\Seller-SKU\images. The app scans only when you press Scan, and every file change requires your approval.</p>
-            <button id="welcome-choose" class="button button-primary" data-i18n="button.chooseFolder">Choose media folder</button>
+            <h2 data-i18n="welcome.title">Choose files or a folder to begin</h2>
+            <p data-i18n="welcome.body">Choose individual media for a quick review, or choose a folder to scan its media library. The app only reads the source you choose, and every file change requires your approval.</p>
+            <div class="source-choices">
+              <button id="welcome-choose-files" class="button button-primary source-choice" type="button">
+                <strong data-i18n="button.chooseFiles">Choose files</strong>
+                <span data-i18n="welcome.filesHint">Pick one or more images or videos.</span>
+              </button>
+              <button id="welcome-choose" class="button button-secondary source-choice" type="button">
+                <strong data-i18n="button.chooseFolder">Choose folder</strong>
+                <span data-i18n="welcome.folderHint">Scan this folder and its subfolders.</span>
+              </button>
+            </div>
             <div class="safety-row">
               <span data-i18n="welcome.localOnly">Local only</span><span data-i18n="welcome.backups">30-day safety backups</span><span data-i18n="welcome.xmp">Exact XMP re-check</span>
             </div>

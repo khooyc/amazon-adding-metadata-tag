@@ -1,12 +1,25 @@
 (() => {
-  const DETECTOR_VERSION = 'human-3.3.6-face-body-web-v1';
+  const DETECTOR_VERSION = 'human-3.3.6-face-body-web-v2';
   const FACE_THRESHOLD = 0.45;
   const BODY_THRESHOLD = 0.25;
+  const BODY_MIN_CONFIDENT_KEYPOINTS = 4;
+  const BODY_MIN_BOX_SIZE = 8;
   let detectorPromise;
+
+  function isUsableBodyPose(item) {
+    if (Number(item?.score) < BODY_THRESHOLD) return false;
+    const width = Number(item?.box?.[2]);
+    const height = Number(item?.box?.[3]);
+    if (!Number.isFinite(width) || !Number.isFinite(height)) return false;
+    if (width < BODY_MIN_BOX_SIZE || height < BODY_MIN_BOX_SIZE) return false;
+    const confidentKeypoints = (Array.isArray(item?.keypoints) ? item.keypoints : [])
+      .filter((point) => Number(point?.score) >= BODY_THRESHOLD);
+    return confidentKeypoints.length >= BODY_MIN_CONFIDENT_KEYPOINTS;
+  }
 
   function normalize(result) {
     const faces = (result?.face || []).filter((item) => Number(item.score) >= FACE_THRESHOLD);
-    const bodies = (result?.body || []).filter((item) => Number(item.score) >= BODY_THRESHOLD);
+    const bodies = (result?.body || []).filter(isUsableBodyPose);
     return {
       hasPerson: faces.length > 0 || bodies.length > 0,
       faceCount: faces.length,

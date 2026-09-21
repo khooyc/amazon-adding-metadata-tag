@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('mediaTagger', Object.freeze({
   openUpdate: (releaseUrl) => invoke('app:open-update', { releaseUrl }),
   openSoftwareDisclaimer: () => invoke('legal:open-software-disclaimer'),
   openCreatorProfile: () => invoke('creator:open-github-profile'),
+  chooseFiles: (locale) => invoke('files:choose', { locale }),
   chooseFolder: (locale) => invoke('folder:choose', { locale }),
   scan: (rootPath) => invoke('scan:run', { rootPath }),
   saveClassificationRecommendations: (rootPath, recommendations) => invoke('classification:save', { rootPath, recommendations }),
